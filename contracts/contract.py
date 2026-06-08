@@ -1,153 +1,151 @@
 # { "Depends": "py-genlayer:latest" }
+
 from genlayer import *
 
 class VeriTrust:
     """
-    GenLayer Intelligent Contract for decentralized quality assurance and web data validation.
-    Validates claims against live web data using consensus-based LLM verification.
+    VeriTrust - A production-ready GenLayer Intelligent Contract for web claim verification.
+    Fetches web content, uses LLM to verify claims against the fetched data,
+    and stores verification results on-chain with full consensus through determinism boundaries.
     """
     
-    # Storage state declarations with explicit type annotations
+    # Persistent storage declaration with explicit type annotations
     verified_claims: TreeMap[str, str]
-    claim_metadata: TreeMap[str, str]
-    validator_consensus: TreeMap[str, str]
+    verification_log: TreeMap[str, str]
+    claim_counter: int
     
-    def __init__(self):
-        """Initialize storage containers for verified claims and metadata."""
+    def __init__(self) -> None:
+        """Initialize contract state with TreeMap storage for on-chain persistence."""
         self.verified_claims = TreeMap()
-        self.claim_metadata = TreeMap()
-        self.validator_consensus = TreeMap()
+        self.verification_log = TreeMap()
+        self.claim_counter = 0
     
     @gl.public.write
     def verify_web_claim(self, url: str, claim: str) -> str:
         """
-        Verify a web claim against live content using consensus-based LLM validators.
+        Verify a claim against web content fetched from the provided URL.
+        
+        This method:
+        1. Fetches text content from the provided URL
+        2. Uses LLM to verify if the fetched content supports the claim
+        3. Stores the verification result on-chain
+        4. Returns the verdict (VERIFIED, UNVERIFIED, or ERROR)
         
         Args:
-            url (str): The web URL to validate against
-            claim (str): The claim statement to verify
+            url: The URL to fetch content from for verification
+            claim: The claim to verify against the fetched web content
             
         Returns:
-            str: JSON-serialized verification result with status and confidence
+            A string verdict: "VERIFIED", "UNVERIFIED", or "ERROR"
         """
-        # Encapsulate non-deterministic operations within isolation barrier
-        result = gl.eq_principle.prompt_comparative(
-            self._validate_claim_against_web,
+        
+        # Increment claim counter for unique tracking
+        self.claim_counter += 1
+        claim_id: str = f"claim_{self.claim_counter}"
+        
+        # Wrap non-deterministic operations in equivalence principle boundary
+        # This ensures all validators reach consensus on the same result
+        verdict: str = gl.eq_principle.prompt_comparative(
+            self._fetch_and_verify,
             url,
             claim
         )
         
-        # Store deterministic result in persistent storage
-        claim_key = f"{url}:{claim[:50]}"
-        self.verified_claims[claim_key] = result
-        self.claim_metadata[claim_key] = url
+        # Store verification result on-chain
+        self.verified_claims[claim_id] = verdict
+        self.verification_log[claim_id] = f"URL: {url} | Claim: {claim} | Verdict: {verdict}"
         
-        return result
+        return verdict
     
-    def _validate_claim_against_web(self, url: str, claim: str) -> str:
+    def _fetch_and_verify(self, url: str, claim: str) -> str:
         """
-        Non-deterministic validation block: fetch web content and run LLM consensus.
-        This runs inside gl.eq_principle.prompt_comparative isolation barrier.
+        Internal helper method that fetches web content and verifies the claim.
+        This runs inside the determinism boundary to ensure consensus.
         
         Args:
-            url (str): Web URL to fetch
-            claim (str): Claim to validate
+            url: The URL to fetch content from
+            claim: The claim to verify
             
         Returns:
-            str: Verification result as JSON string
+            The verification verdict
         """
-        # Fetch web content non-deterministically
-        web_content = gl.nondet.web.get(url, mode='text')
         
-        if not web_content:
-            return '{"status": "error", "message": "Failed to fetch URL", "verified": false}'
-        
-        # Prepare validation prompt for LLM consensus
-        validation_prompt = f"""
-You are a quality assurance validator for a decentralized oracle network.
-Your task is to determine if the following claim is supported by the web content.
-
-CLAIM: {claim}
-
-WEB CONTENT (first 2000 chars):
-{web_content[:2000]}
-
-Analyze the content carefully and determine:
-1. Is the claim directly supported by the content?
-2. Is the claim contradicted by the content?
-3. Is the claim neither supported nor contradicted (uncertain)?
-
-Respond with a JSON object containing:
-- "verified": boolean (true if claim is clearly supported)
-- "confidence": number between 0 and 1
-- "reasoning": brief explanation
-"""
-        
-        # Execute LLM validation with consensus requirement
-        validator_response = gl.nondet.exec_prompt(validation_prompt)
-        
-        # Parse and structure the validation response
         try:
-            # Extract JSON from potential markdown code blocks
-            if "```json" in validator_response:
-                json_start = validator_response.find("```json") + 7
-                json_end = validator_response.find("```", json_start)
-                validator_response = validator_response[json_start:json_end].strip()
-            elif "{" in validator_response and "}" in validator_response:
-                json_start = validator_response.find("{")
-                json_end = validator_response.rfind("}") + 1
-                validator_response = validator_response[json_start:json_end]
+            # Fetch web content from the provided URL
+            web_response: str = gl.nondet.web.get(url)
             
-            return validator_response
-        except Exception:
-            return '{"status": "error", "message": "Failed to parse validator response", "verified": false}'
+            if not web_response or len(web_response) == 0:
+                return "ERROR"
+            
+            # Prepare LLM prompt for claim verification
+            prompt: str = f"""You are a fact-checking AI. Verify the following claim against the provided web content.
+
+Web Content:
+{web_response[:2000]}
+
+Claim to Verify:
+{claim}
+
+Based on the web content above, respond with ONLY one word:
+- VERIFIED if the web content supports/confirms the claim
+- UNVERIFIED if the web content contradicts or does not support the claim
+- ERROR if you cannot determine"""
+            
+            # Execute LLM verification within determinism boundary
+            llm_response: str = gl.nondet.exec_prompt(prompt)
+            
+            # Parse and normalize the LLM response
+            response_upper: str = llm_response.strip().upper()
+            
+            if "VERIFIED" in response_upper:
+                return "VERIFIED"
+            elif "UNVERIFIED" in response_upper:
+                return "UNVERIFIED"
+            else:
+                return "ERROR"
+                
+        except Exception as e:
+            return "ERROR"
     
     @gl.public.view
-    def get_verified_claim(self, claim_key: str) -> str:
+    def get_claim_verdict(self, claim_id: str) -> str:
         """
-        Retrieve a previously verified claim from storage.
+        Retrieve the stored verification verdict for a specific claim.
         
         Args:
-            claim_key (str): The claim key (url:claim_hash)
+            claim_id: The unique identifier of the claim
             
         Returns:
-            str: The verification result, or empty string if not found
+            The stored verdict string, or "NOT_FOUND" if claim does not exist
         """
-        if claim_key in self.verified_claims:
-            return self.verified_claims[claim_key]
-        return ""
+        
+        if claim_id in self.verified_claims:
+            return self.verified_claims[claim_id]
+        return "NOT_FOUND"
     
     @gl.public.view
-    def get_all_verified_claims(self) -> str:
+    def get_verification_log(self, claim_id: str) -> str:
         """
-        Retrieve all verified claims from storage.
+        Retrieve the complete verification log entry for a claim.
         
+        Args:
+            claim_id: The unique identifier of the claim
+            
         Returns:
-            str: JSON array of all verified claims
+            The log entry string, or "NOT_FOUND" if claim does not exist
         """
-        claims_list = []
-        for key in self.verified_claims:
-            claim_data = {
-                "key": key,
-                "result": self.verified_claims[key],
-                "url": self.claim_metadata.get(key, "")
-            }
-            claims_list.append(claim_data)
         
-        # Format as JSON-compatible string representation
-        return str(claims_list)
+        if claim_id in self.verification_log:
+            return self.verification_log[claim_id]
+        return "NOT_FOUND"
     
     @gl.public.view
-    def get_storage_stats(self) -> str:
+    def get_total_claims_processed(self) -> int:
         """
-        Get statistics about current storage usage.
+        Get the total number of claims processed by this contract.
         
         Returns:
-            str: JSON string with claim counts and storage info
+            The count of claims processed
         """
-        stats = {
-            "total_verified_claims": len(self.verified_claims),
-            "total_metadata_entries": len(self.claim_metadata),
-            "total_consensus_records": len(self.validator_consensus)
-        }
-        return str(stats)
+        
+        return self.claim_counter
