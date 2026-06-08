@@ -1,3 +1,5 @@
+
+
 # VeriTrust AI — On-Chain E-Commerce & Product Claim Oracle
 
 > **Eliminate oracle risk through GenLayer's consensus-driven, non-deterministic web verification protocol.**
@@ -403,7 +405,9 @@ For technical questions, grant evaluation support, or deployment assistance:
 
 ---
 
-**Built with ❤️ for the GenLayer ecosystem.**
+**Built by U-stacklabs for the GenLayer ecosystem.**
 
-*VeriTrust AI — Where consumer trust meets cryptographic proof.*#   v e r i t r u s t _ a i  
- 
+*VeriTrust AI — Where consumer trust meets cryptographic proof.*#
+
+
+
