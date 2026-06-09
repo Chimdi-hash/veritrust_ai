@@ -405,7 +405,7 @@ For technical questions, grant evaluation support, or deployment assistance:
 
 ---
 
-**Built with ❤️ for the GenLayer ecosystem.**
+**Built by U-stacklabs for the GenLayer ecosystem.**
 
 *VeriTrust AI — Where consumer trust meets cryptographic proof.*#
 
