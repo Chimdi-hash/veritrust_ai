@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -88,7 +89,9 @@
 
         /* Spinner animation */
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .spinner {
@@ -97,10 +100,13 @@
 
         /* Pulse animation for status indicator */
         @keyframes pulse-glow {
-            0%, 100% {
+
+            0%,
+            100% {
                 opacity: 1;
                 box-shadow: 0 0 20px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.4);
             }
+
             50% {
                 opacity: 0.6;
                 box-shadow: 0 0 30px rgba(16, 185, 129, 0.4), 0 0 60px rgba(16, 185, 129, 0.2);
@@ -151,6 +157,7 @@
                 opacity: 0;
                 transform: translateY(40px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -163,6 +170,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -171,9 +179,12 @@
 
         /* Text glimmer animation */
         @keyframes textGlimmer {
-            0%, 100% {
+
+            0%,
+            100% {
                 opacity: 1;
             }
+
             50% {
                 opacity: 0.85;
             }
@@ -188,16 +199,28 @@
             animation: badgeFadeIn 0.6s ease-out forwards;
         }
 
-        .metric-badge:nth-child(1) { animation-delay: 0.1s; }
-        .metric-badge:nth-child(2) { animation-delay: 0.2s; }
-        .metric-badge:nth-child(3) { animation-delay: 0.3s; }
-        .metric-badge:nth-child(4) { animation-delay: 0.4s; }
+        .metric-badge:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .metric-badge:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .metric-badge:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .metric-badge:nth-child(4) {
+            animation-delay: 0.4s;
+        }
 
         @keyframes badgeFadeIn {
             from {
                 opacity: 0;
                 transform: scale(0.9);
             }
+
             to {
                 opacity: 1;
                 transform: scale(1);
@@ -221,6 +244,7 @@
             from {
                 transform: translateX(-100%);
             }
+
             to {
                 transform: translateX(0);
             }
@@ -228,9 +252,12 @@
 
         /* Floating animation for background elements */
         @keyframes float {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translateY(0px);
             }
+
             50% {
                 transform: translateY(-20px);
             }
@@ -246,16 +273,28 @@
             animation: fadeInUp 0.6s ease-out forwards;
         }
 
-        .stagger-item:nth-child(1) { animation-delay: 0s; }
-        .stagger-item:nth-child(2) { animation-delay: 0.1s; }
-        .stagger-item:nth-child(3) { animation-delay: 0.2s; }
-        .stagger-item:nth-child(4) { animation-delay: 0.3s; }
+        .stagger-item:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .stagger-item:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .stagger-item:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .stagger-item:nth-child(4) {
+            animation-delay: 0.3s;
+        }
 
         @keyframes fadeInUp {
             from {
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -429,6 +468,7 @@
                 opacity: 0;
                 transform: translateY(-20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -452,9 +492,11 @@
                 transform: translateY(-40px) scale(0.95);
                 filter: blur(8px);
             }
+
             50% {
                 opacity: 0.8;
             }
+
             100% {
                 opacity: 1;
                 transform: translateY(0) scale(1);
@@ -468,9 +510,11 @@
                 transform: translateY(30px) scale(0.9);
                 filter: blur(10px);
             }
+
             60% {
                 opacity: 0.9;
             }
+
             100% {
                 opacity: 1;
                 transform: translateY(0) scale(1);
@@ -483,6 +527,7 @@
                 opacity: 0;
                 transform: translateY(-20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -494,6 +539,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -506,20 +552,26 @@
         }
 
         @keyframes heightPulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 height: 100%;
             }
+
             50% {
                 height: 60%;
             }
         }
     </style>
 </head>
+
 <body class="min-h-screen overflow-x-hidden">
     <!-- Animated background gradient -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute top-0 left-1/4 w-64 md:w-96 h-64 md:h-96 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-3xl float-animate" style="animation-delay: 0s;"></div>
-        <div class="absolute bottom-0 right-1/4 w-64 md:w-96 h-64 md:h-96 bg-gradient-to-tl from-emerald-500/10 to-transparent rounded-full blur-3xl float-animate" style="animation-delay: 2s;"></div>
+        <div class="absolute top-0 left-1/4 w-64 md:w-96 h-64 md:h-96 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-3xl float-animate"
+            style="animation-delay: 0s;"></div>
+        <div class="absolute bottom-0 right-1/4 w-64 md:w-96 h-64 md:h-96 bg-gradient-to-tl from-emerald-500/10 to-transparent rounded-full blur-3xl float-animate"
+            style="animation-delay: 2s;"></div>
     </div>
 
     <!-- Content -->
@@ -529,69 +581,71 @@
             <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4 md:py-4">
                 <div class="flex items-center justify-between mb-2.5 sm:mb-3">
                     <div class="flex items-center gap-2">
-                        <div class="w-7 sm:w-8 md:w-9 h-7 sm:h-8 md:h-9 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center font-bold text-slate-900 text-sm sm:text-base md:text-base flex-shrink-0">
+                        <div
+                            class="w-7 sm:w-8 md:w-9 h-7 sm:h-8 md:h-9 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center font-bold text-slate-900 text-sm sm:text-base md:text-base flex-shrink-0">
                             ✓
                         </div>
-                        <h1 class="text-base sm:text-lg md:text-xl font-bold gradient-text whitespace-nowrap">VeriTrust AI</h1>
+                        <h1 class="text-base sm:text-lg md:text-xl font-bold gradient-text whitespace-nowrap">VeriTrust
+                            AI</h1>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 w-fit sm:w-full px-2 py-1.5 sm:py-2 rounded-lg bg-slate-800/40 border border-slate-700/50 justify-center sm:justify-start">
+                <div
+                    class="flex items-center gap-2 w-fit sm:w-full px-2 py-1.5 sm:py-2 rounded-lg bg-slate-800/40 border border-slate-700/50 justify-center sm:justify-start">
                     <div class="w-2 h-2 bg-emerald-400 rounded-full status-pulse flex-shrink-0"></div>
-                    <span class="text-xs sm:text-sm font-medium text-slate-300 text-center sm:text-left">Oracle Node: Active</span>
+                    <span class="text-xs sm:text-sm font-medium text-slate-300 text-center sm:text-left">Oracle Node:
+                        Active</span>
                 </div>
                 <div class="header-accent mt-2.5 md:mt-3"></div>
             </div>
-            
+
             <!-- RPC Configuration Toggle -->
             <div class="max-w-4xl mx-auto px-6 py-3 flex justify-end">
-                <button id="settingsToggle" class="text-sm text-slate-400 hover:text-slate-300 transition-colors flex items-center gap-2">
+                <button id="settingsToggle"
+                    class="text-sm text-slate-400 hover:text-slate-300 transition-colors flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
                     Settings
                 </button>
             </div>
-            
+
             <!-- RPC Settings Panel (Hidden by default) -->
-            <div id="settingsPanel" class="hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div id="settingsPanel"
+                class="hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                 <div class="glass-card rounded-2xl p-6 md:p-8 max-w-md w-full space-y-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-xl font-bold text-white">GenLayer Configuration</h3>
                         <button id="settingsClose" class="text-slate-400 hover:text-slate-200 transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </button>
                     </div>
-                    
+
                     <div>
                         <label for="rpcUrl" class="block text-sm font-medium text-slate-300 mb-2">
                             GenLayer RPC Endpoint
                         </label>
-                        <input
-                            type="text"
-                            id="rpcUrl"
-                            placeholder="http://localhost:4000"
-                            class="w-full px-4 py-3 rounded-lg form-input text-sm"
-                        />
+                        <input type="text" id="rpcUrl" placeholder="http://localhost:4000"
+                            class="w-full px-4 py-3 rounded-lg form-input text-sm" />
                         <p class="text-xs text-slate-400 mt-2">
                             Default: <code class="text-emerald-400">http://localhost:4000</code>
                         </p>
                     </div>
-                    
+
                     <div>
                         <label for="contractAddr" class="block text-sm font-medium text-slate-300 mb-2">
                             Contract Address
                         </label>
-                        <input
-                            type="text"
-                            id="contractAddr"
-                            placeholder="0x0000000000000000000000000000000000000000"
-                            class="w-full px-4 py-3 rounded-lg form-input text-sm font-mono"
-                        />
+                        <input type="text" id="contractAddr" placeholder="0x0000000000000000000000000000000000000000"
+                            class="w-full px-4 py-3 rounded-lg form-input text-sm font-mono" />
                     </div>
-                    
+
                     <div>
                         <label class="flex items-center gap-3 cursor-pointer">
                             <input type="checkbox" id="demoMode" class="w-4 h-4">
@@ -601,19 +655,22 @@
                             Enable to use mock data when network is unavailable
                         </p>
                     </div>
-                    
+
                     <div class="flex gap-3">
-                        <button id="settingsSave" class="flex-1 gradient-button px-4 py-2 rounded-lg font-semibold text-sm transition-all active:scale-95">
+                        <button id="settingsSave"
+                            class="flex-1 gradient-button px-4 py-2 rounded-lg font-semibold text-sm transition-all active:scale-95">
                             Save Settings
                         </button>
-                        <button id="settingsReset" class="flex-1 px-4 py-2 rounded-lg border border-slate-600 text-slate-300 font-semibold text-sm hover:bg-slate-800/50 transition-all active:scale-95">
+                        <button id="settingsReset"
+                            class="flex-1 px-4 py-2 rounded-lg border border-slate-600 text-slate-300 font-semibold text-sm hover:bg-slate-800/50 transition-all active:scale-95">
                             Reset
                         </button>
                     </div>
-                    
+
                     <div class="pt-4 border-t border-slate-700/30 text-xs text-slate-400">
                         <p class="mb-2"><strong>To start a local GenLayer node:</strong></p>
-                        <code class="block bg-slate-800/50 p-2 rounded text-slate-300">npm install -g @genlayer/cli && genlayer serve</code>
+                        <code
+                            class="block bg-slate-800/50 p-2 rounded text-slate-300">npm install -g @genlayer/cli && genlayer serve</code>
                     </div>
                 </div>
             </div>
@@ -627,7 +684,8 @@
                     Verify On-Chain Truth
                 </h2>
                 <p class="text-lg md:text-base text-slate-400 max-w-2xl mx-auto hero-subtitle">
-                    Submit claims for consensus validation powered by GenLayer validators. Achieve cryptographic proof of verification through distributed consensus.
+                    Submit claims for consensus validation powered by GenLayer validators. Achieve cryptographic proof
+                    of verification through distributed consensus.
                 </p>
             </div>
 
@@ -637,20 +695,15 @@
                 <div class="lg:col-span-2">
                     <div class="glass-card rounded-2xl p-6 md:p-8 space-y-6">
                         <h3 class="text-xl font-bold text-white mb-6">Submit Claim for Verification</h3>
-                        
+
                         <form id="verifyForm" class="space-y-6">
                             <!-- Target URL Input -->
                             <div>
                                 <label for="targetUrl" class="block text-sm font-medium text-slate-300 mb-2">
                                     Target URL
                                 </label>
-                                <input
-                                    type="url"
-                                    id="targetUrl"
-                                    placeholder="https://example.com/data"
-                                    required
-                                    class="w-full px-4 py-3 md:py-3 rounded-lg form-input"
-                                />
+                                <input type="url" id="targetUrl" placeholder="https://example.com/data" required
+                                    class="w-full px-4 py-3 md:py-3 rounded-lg form-input" />
                             </div>
 
                             <!-- Claim Description Input -->
@@ -658,26 +711,22 @@
                                 <label for="claimDescription" class="block text-sm font-medium text-slate-300 mb-2">
                                     Claim Description
                                 </label>
-                                <textarea
-                                    id="claimDescription"
-                                    placeholder="Describe the claim you want to verify..."
-                                    rows="4"
-                                    required
-                                    class="w-full px-4 py-3 md:py-3 rounded-lg form-input resize-none"
-                                ></textarea>
+                                <textarea id="claimDescription" placeholder="Describe the claim you want to verify..."
+                                    rows="4" required
+                                    class="w-full px-4 py-3 md:py-3 rounded-lg form-input resize-none"></textarea>
                             </div>
 
                             <!-- Submit Button -->
-                            <button
-                                type="submit"
-                                id="submitBtn"
-                                class="w-full gradient-button py-3 md:py-3 rounded-lg font-semibold text-base md:text-lg transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
-                            >
+                            <button type="submit" id="submitBtn"
+                                class="w-full gradient-button py-3 md:py-3 rounded-lg font-semibold text-base md:text-lg transition-all duration-300 flex items-center justify-center gap-2 active:scale-95">
                                 <span id="btnText">Verify via GenLayer</span>
                                 <span id="btnSpinner" class="hidden">
                                     <svg class="w-5 h-5 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
                                     </svg>
                                 </span>
                             </button>
@@ -723,26 +772,28 @@
             <!-- Result Card (Initially Hidden) -->
             <div id="resultContainer" class="hidden">
                 <div class="glass-card rounded-2xl p-6 md:p-8 result-card-enter">
-                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 mb-8">
+                    <div
+                        class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 mb-8">
                         <h3 class="text-2xl md:text-3xl font-bold text-white">Verification Complete</h3>
-                        <button
-                            id="closeResult"
+                        <button id="closeResult"
                             class="text-slate-400 hover:text-slate-200 transition-colors active:scale-90"
-                            onclick="closeResult()"
-                        >
+                            onclick="closeResult()">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </button>
                     </div>
 
                     <!-- Consensus Status -->
-                    <div class="mb-8 p-6 rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 animate-pulse">
+                    <div
+                        class="mb-8 p-6 rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 animate-pulse">
                         <div class="flex items-center gap-3 mb-4">
                             <div class="w-3 h-3 bg-emerald-400 rounded-full status-pulse"></div>
                             <span class="text-lg font-bold text-emerald-400">Consensus Achieved</span>
                         </div>
-                        <p class="text-slate-300 text-sm md:text-base">All validators have reached agreement on the submitted claim.</p>
+                        <p class="text-slate-300 text-sm md:text-base">All validators have reached agreement on the
+                            submitted claim.</p>
                     </div>
 
                     <!-- Metrics Grid -->
@@ -777,15 +828,19 @@
                         <h4 class="text-sm font-bold text-white mb-4">Verified Claim Summary</h4>
                         <div class="bg-slate-800/30 rounded-lg p-6 border border-slate-700/30 space-y-4">
                             <div>
-                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Target URL</div>
-                                <div id="resultUrl" class="text-slate-300 font-mono text-xs md:text-sm break-all">—</div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Target
+                                    URL</div>
+                                <div id="resultUrl" class="text-slate-300 font-mono text-xs md:text-sm break-all">—
+                                </div>
                             </div>
                             <div class="border-t border-slate-700/30 pt-4">
-                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Claim Assessment</div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Claim
+                                    Assessment</div>
                                 <div id="resultClaim" class="text-slate-300 text-sm leading-relaxed">—</div>
                             </div>
                             <div class="border-t border-slate-700/30 pt-4">
-                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Truth State</div>
+                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Truth
+                                    State</div>
                                 <div class="text-emerald-400 font-semibold text-sm">
                                     ✓ Verified and Consensus-Backed
                                 </div>
@@ -795,16 +850,12 @@
 
                     <!-- Action Buttons -->
                     <div class="flex flex-col sm:flex-row gap-3 md:gap-4">
-                        <button
-                            onclick="closeResult()"
-                            class="flex-1 px-6 py-3 rounded-lg border border-slate-600 text-slate-300 font-semibold hover:bg-slate-800/50 transition-all duration-300 active:scale-95"
-                        >
+                        <button onclick="closeResult()"
+                            class="flex-1 px-6 py-3 rounded-lg border border-slate-600 text-slate-300 font-semibold hover:bg-slate-800/50 transition-all duration-300 active:scale-95">
                             New Verification
                         </button>
-                        <button
-                            onclick="exportResult()"
-                            class="flex-1 gradient-button px-6 py-3 rounded-lg font-semibold transition-all duration-300 active:scale-95"
-                        >
+                        <button onclick="exportResult()"
+                            class="flex-1 gradient-button px-6 py-3 rounded-lg font-semibold transition-all duration-300 active:scale-95">
                             Export Proof
                         </button>
                     </div>
@@ -814,9 +865,13 @@
             <!-- Loading State (Initially Hidden) -->
             <div id="loadingContainer" class="hidden">
                 <div class="glass-card rounded-2xl p-8 md:p-12 text-center">
-                    <svg class="w-12 md:w-16 h-12 md:h-16 spinner mx-auto mb-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg class="w-12 md:w-16 h-12 md:h-16 spinner mx-auto mb-6 text-emerald-400" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
                     </svg>
                     <h3 class="text-xl md:text-2xl font-bold text-white mb-2">Validating Claim</h3>
                     <p class="text-slate-400 text-sm md:text-base">Requesting consensus from GenLayer validators...</p>
@@ -843,7 +898,7 @@
         // ============================================
         // GENLAYER NETWORK CONFIGURATION
         // ============================================
-        
+
         let GENLAYER_RPC_URL = localStorage.getItem('genlayerRpcUrl') || 'http://localhost:4000';
         let CONTRACT_ADDRESS = localStorage.getItem('contractAddress') || '0x0000000000000000000000000000000000000000';
         let DEMO_MODE = localStorage.getItem('demoMode') === 'true';
@@ -851,13 +906,13 @@
         // ============================================
         // STATE MANAGEMENT
         // ============================================
-        
+
         let verificationResult = null;
 
         // ============================================
         // SETTINGS PANEL MANAGEMENT
         // ============================================
-        
+
         const settingsToggle = document.getElementById('settingsToggle');
         const settingsClose = document.getElementById('settingsClose');
         const settingsPanel = document.getElementById('settingsPanel');
@@ -929,7 +984,7 @@
         // ============================================
         // DIRECT CONTRACT STATE READ HANDLER
         // ============================================
-        
+
         /**
          * Fetch contract state directly from GenLayer Intelligent Contract
          * Reads verified claims from contract storage using gen_callMethod
@@ -1046,7 +1101,7 @@
          * Generate consensus hash from contract response
          */
         function generateConsensusHash() {
-            return '0x' + Array.from({length: 32}, () => 
+            return '0x' + Array.from({ length: 32 }, () =>
                 Math.floor(Math.random() * 16).toString(16)
             ).join('');
         }
@@ -1061,7 +1116,7 @@
         // ============================================
         // GENLAYER JSON-RPC NETWORK REQUEST
         // ============================================
-        
+
         /**
          * Invoke a contract method via GenLayer JSON-RPC 2.0
          * Sends an authenticated POST request to the GenLayer RPC endpoint
@@ -1126,7 +1181,7 @@
             // ethers.js: const iface = new ethers.Interface([CONTRACT_ABI]);
             //           return iface.encodeFunctionData(methodName, params);
             // web3.js:   return web3.eth.abi.encodeFunctionCall(CONTRACT_ABI, params);
-            
+
             // For demonstration, create a simple method identifier
             const methodSignature = `${methodName}(string,string)`;
             // Create a deterministic 4-byte selector from method signature
@@ -1182,7 +1237,7 @@
         // ============================================
         // DOM ELEMENTS
         // ============================================
-        
+
         const verifyForm = document.getElementById('verifyForm');
         const submitBtn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
@@ -1193,10 +1248,10 @@
         // ============================================
         // FORM SUBMISSION WITH REAL NETWORK HANDSHAKE
         // ============================================
-        
+
         verifyForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const targetUrl = document.getElementById('targetUrl').value;
             const claimDescription = document.getElementById('claimDescription').value;
 
@@ -1221,11 +1276,11 @@
             } catch (error) {
                 // Capture runtime errors and display gracefully in output window
                 console.error('Verification error:', error);
-                
+
                 // Show error state in the UI
                 loadingContainer.classList.add('hidden');
                 resultContainer.classList.remove('hidden');
-                
+
                 displayErrorResult(error);
                 resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } finally {
@@ -1239,12 +1294,12 @@
         // ============================================
         // RESULT DISPLAY & ERROR HANDLING
         // ============================================
-        
+
         function displayVerificationResult(result) {
             // Display URL and claim from successful verification
             document.getElementById('resultUrl').textContent = result.targetUrl;
             document.getElementById('resultClaim').textContent = result.claim;
-            
+
             // Update metrics with verified data from contract state
             updateMetrics(result);
 
@@ -1316,15 +1371,15 @@
             // Update validator agreement (Verification Status)
             const agreementElements = document.querySelectorAll('[data-metric="agreement"]');
             agreementElements.forEach(el => el.textContent = result.validatorAgreement);
-            
+
             // Update validator count (Consensus Count)
             const countElements = document.querySelectorAll('[data-metric="count"]');
             countElements.forEach(el => el.textContent = result.validatorsParticipated);
-            
+
             // Update consensus hash from contract storage
             const hashElements = document.querySelectorAll('[data-metric="hash"]');
             hashElements.forEach(el => el.textContent = result.consensusHash);
-            
+
             // Update block reference from contract state
             const blockElements = document.querySelectorAll('[data-metric="block"]');
             blockElements.forEach(el => el.textContent = result.blockReference);
@@ -1356,5 +1411,8 @@
             URL.revokeObjectURL(url);
         }
     </script>
+    <script src="genlayerclient.js"></script>
+    <script src="app.js"></script>
 </body>
+
 </html>
