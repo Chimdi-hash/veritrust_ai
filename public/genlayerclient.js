@@ -1,6 +1,7 @@
 class GenLayerClient {
-    constructor(rpcUrl = 'https://studio.genlayer.com/api') {
+    constructor(rpcUrl = 'https://studio.genlayer.com/api', contractAddress = '0xFa1C9aAE5FFFA7a76b6BC6f021f75BFcbe244EC6') {
         this.rpcUrl = rpcUrl;
+        this.contractAddress = contractAddress;
     }
 
     /**
@@ -35,10 +36,10 @@ class GenLayerClient {
     /**
      * Executes a state-changing write transaction on the contract
      */
-    async verifyWebClaim(contractAddress, url, claim) {
+    async verifyWebClaim(url, claim) {
         return await this._request('gen_sendTransaction', {
             from: '0x0000000000000000000000000000000000000000', // Default developer simulator address
-            to: contractAddress,
+            to: this.contractAddress,
             data: {
                 method: 'verify_web_claim',
                 args: [url, claim]
@@ -49,10 +50,10 @@ class GenLayerClient {
     /**
      * Reads a value from the contract without changing global state
      */
-    async getVerificationStatus(contractAddress, url, claim) {
+    async getVerificationStatus(url, claim) {
         return await this._request('gen_callMethod', {
             from: '0x0000000000000000000000000000000000000000',
-            to: contractAddress,
+            to: this.contractAddress,
             method: 'get_verification_status',
             args: [url, claim]
         });
