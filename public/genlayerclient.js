@@ -1,11 +1,34 @@
 class GenLayerClient {
-    constructor(rpcUrl = 'https://studio.genlayer.com/api', contractAddress = '0xFa1C9aAE5FFFA7a76b6BC6f021f75BFcbe244EC6') {
+    constructor(rpcUrl = 'https://studio.genlayer.com/api') {
         this.rpcUrl = rpcUrl;
-        this.contractAddress = contractAddress;
+        this.userAddress = null;
     }
 
     /**
-     * Helper to send standardized JSON-RPC POST requests
+     * Checks if an EVM browser wallet is installed and requests account access
+     */
+    async connectWallet() {
+        if (!window.ethereum) {
+            throw new Error("No crypto wallet detected. Please install MetaMask or Rabby.");
+        }
+
+        try {
+            // Request account access from the browser extension
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            if (!accounts || accounts.length === 0) {
+                throw new Error("No accounts found or connection rejected.");
+            }
+
+            this.userAddress = accounts[0];
+            return this.userAddress;
+        } catch (error) {
+            console.error("Wallet connection handshake failed:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Helper to route JSON-RPC requests via standard fetch
      */
     async _request(method, params = {}) {
         const response = await fetch(this.rpcUrl, {
@@ -34,12 +57,17 @@ class GenLayerClient {
     }
 
     /**
-     * Executes a state-changing write transaction on the contract
+     * Submits a transaction to be signed securely by the user's connected wallet
      */
-    async verifyWebClaim(url, claim) {
+    async verifyWebClaim(contractAddress, url, claim) {
+        if (!this.userAddress) {
+            throw new Error("Wallet not connected! Please connect your wallet first.");
+        }
+
+        // Send transaction payload directly to GenLayer's network node
         return await this._request('gen_sendTransaction', {
-            from: '0x0000000000000000000000000000000000000000', // Default developer simulator address
-            to: this.contractAddress,
+            from: this.userAddress, // Real user address signed by MetaMask/Rabby
+            to: contractAddress,
             data: {
                 method: 'verify_web_claim',
                 args: [url, claim]
@@ -48,17 +76,20 @@ class GenLayerClient {
     }
 
     /**
-     * Reads a value from the contract without changing global state
+     * Reads evaluation status directly from contract state map (Read-only)
      */
-    async getVerificationStatus(url, claim) {
+    async getVerificationStatus(contractAddress, url, claim) {
+        // Fallback address safely used for simple view operations
+        const callerAddress = this.userAddress || '0x0000000000000000000000000000000000000000';
+
         return await this._request('gen_callMethod', {
-            from: '0x0000000000000000000000000000000000000000',
-            to: this.contractAddress,
+            from: callerAddress,
+            to: contractAddress,
             method: 'get_verification_status',
             args: [url, claim]
         });
     }
 }
 
-// Export for browser use
+// Export initialization variable
 window.GenLayerClient = GenLayerClient;
