@@ -4,1205 +4,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VeriTrust AI - On-Chain Oracle Verification</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>VeriTrust AI — Decentralized Oracle Validation</title>
     <style>
-        /* Deep Slate Navy background */
         :root {
-            --slate-navy: #0F172A;
-            --neon-mint: #10B981;
-            --neon-teal: #06B6D4;
-        }
-
-        * {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            --bg-dark: #0B0F19;
+            --card-bg: #111827;
+            --primary-accent: #3B82F6;
+            --primary-hover: #2563EB;
+            --success-green: #10B981;
+            --error-red: #EF4444;
+            --text-main: #F9FAFB;
+            --text-muted: #9CA3AF;
         }
 
         body {
-            background-color: var(--slate-navy);
-            color: #E2E8F0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
-        /* Glassmorphism effect with enhanced animation */
-        .glass-card {
-            background: rgba(30, 41, 59, 0.4);
+        /* Top Navigation Header bar */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            background-color: rgba(17, 24, 39, 0.7);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-            animation: cardFadeIn 0.8s ease-out forwards;
+            border-bottom: 1px solid #1F2937;
         }
 
-        .glass-card:hover {
-            border-color: rgba(16, 185, 129, 0.3);
-            box-shadow: 0 12px 48px rgba(16, 185, 129, 0.15);
-            transform: translateY(-4px);
-        }
-
-        /* Gradient button with enhanced interactions */
-        .gradient-button {
-            background: linear-gradient(135deg, var(--neon-mint), var(--neon-teal));
-            color: var(--slate-navy);
+        .logo {
+            font-size: 1.25rem;
             font-weight: 700;
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-            position: relative;
-            overflow: hidden;
+            letter-spacing: -0.05em;
+            background: linear-gradient(to right, #3B82F6, #10B981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .wallet-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        #walletDisplay {
+            display: none;
+            font-size: 0.875rem;
+            font-family: monospace;
+            background: #1F2937;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #374151;
+            color: var(--text-main);
+        }
+
+        .btn-connect {
+            background-color: var(--primary-accent);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-connect:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Layout Container */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+            background-color: var(--card-bg);
+            border: 1px solid #1F2937;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Error Message display block */
+        #errorBanner {
+            display: none;
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error-red);
+            color: #FCA5A5;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: #1F2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+        }
+
+        .btn-main {
+            width: 100%;
+            background-color: #1F2937;
+            /* Greyed out until wallet connection active */
+            color: #9CA3AF;
+            border: 1px solid #374151;
+            padding: 0.85rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: not-allowed;
+            transition: all 0.2s;
+            margin-top: 1rem;
+        }
+
+        /* Active styling applied by JavaScript */
+        .btn-main:not(:disabled) {
+            background-color: var(--primary-accent);
+            color: white;
             border: none;
             cursor: pointer;
         }
 
-        .gradient-button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+        .btn-main:not(:disabled):hover {
+            background-color: var(--primary-hover);
         }
 
-        .gradient-button:hover::before {
-            width: 300px;
-            height: 300px;
+        /* Result display dashboard card */
+        .result-container {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #1F2937;
+            text-align: center;
         }
 
-        .gradient-button:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 16px 32px rgba(16, 185, 129, 0.4), 0 0 40px rgba(6, 182, 212, 0.2);
+        .result-title {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
         }
 
-        .gradient-button:active {
-            transform: translateY(-1px) scale(0.98);
-        }
-
-        .gradient-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Spinner animation */
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .spinner {
-            animation: spin 1s linear infinite;
-        }
-
-        /* Pulse animation for status indicator */
-        @keyframes pulse-glow {
-
-            0%,
-            100% {
-                opacity: 1;
-                box-shadow: 0 0 20px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.4);
-            }
-
-            50% {
-                opacity: 0.6;
-                box-shadow: 0 0 30px rgba(16, 185, 129, 0.4), 0 0 60px rgba(16, 185, 129, 0.2);
-            }
-        }
-
-        .status-pulse {
-            animation: pulse-glow 2.5s ease-in-out infinite;
-        }
-
-        /* Gradient text */
-        .gradient-text {
-            background: linear-gradient(135deg, var(--neon-mint), var(--neon-teal));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: textGlimmer 3s ease-in-out infinite;
-        }
-
-        /* Input styling with focus glow */
-        .form-input {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1.5px solid rgba(148, 163, 184, 0.3);
-            color: #E2E8F0;
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-            font-size: 16px;
-            padding: 12px 16px;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--neon-mint);
-            box-shadow: 0 0 30px rgba(16, 185, 129, 0.3), inset 0 0 10px rgba(16, 185, 129, 0.1);
-            background: rgba(15, 23, 42, 0.9);
-        }
-
-        .form-input::placeholder {
-            color: rgba(226, 232, 240, 0.4);
-        }
-
-        /* Result card animation */
-        .result-card-enter {
-            animation: slideInUp 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Card fade in animation */
-        @keyframes cardFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Text glimmer animation */
-        @keyframes textGlimmer {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.85;
-            }
-        }
-
-        /* Metric badge with enhanced styling */
-        .metric-badge {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: var(--neon-mint);
-            transition: all 0.4s ease;
-            animation: badgeFadeIn 0.6s ease-out forwards;
-        }
-
-        .metric-badge:nth-child(1) {
-            animation-delay: 0.1s;
-        }
-
-        .metric-badge:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .metric-badge:nth-child(3) {
-            animation-delay: 0.3s;
-        }
-
-        .metric-badge:nth-child(4) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes badgeFadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .metric-badge:hover {
-            border-color: rgba(16, 185, 129, 0.6);
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
-            transform: translateY(-2px);
-        }
-
-        /* Header underline accent */
-        .header-accent {
-            height: 2px;
-            background: linear-gradient(90deg, var(--neon-mint), var(--neon-teal), transparent);
-            animation: slideInRight 0.8s ease-out;
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(-100%);
-            }
-
-            to {
-                transform: translateX(0);
-            }
-        }
-
-        /* Floating animation for background elements */
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-20px);
-            }
-        }
-
-        .float-animate {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        /* Stagger animations for list items */
-        .stagger-item {
-            opacity: 0;
-            animation: fadeInUp 0.6s ease-out forwards;
-        }
-
-        .stagger-item:nth-child(1) {
-            animation-delay: 0s;
-        }
-
-        .stagger-item:nth-child(2) {
-            animation-delay: 0.1s;
-        }
-
-        .stagger-item:nth-child(3) {
-            animation-delay: 0.2s;
-        }
-
-        .stagger-item:nth-child(4) {
-            animation-delay: 0.3s;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Mobile responsive adjustments */
-        @media (max-width: 768px) {
-            body {
-                font-size: 14px;
-            }
-
-            main {
-                padding: 12px 16px !important;
-            }
-
-            h1 {
-                font-size: 1.5rem !important;
-            }
-
-            h2 {
-                font-size: 2rem !important;
-            }
-
-            h3 {
-                font-size: 1.25rem !important;
-            }
-
-            header {
-                padding: 10px 0 !important;
-            }
-
-            header .max-w-4xl {
-                padding-left: 16px !important;
-                padding-right: 16px !important;
-            }
-
-            .glass-card {
-                padding: 20px !important;
-            }
-
-            .gradient-button {
-                padding: 12px 16px !important;
-                font-size: 14px !important;
-            }
-
-            .metric-badge {
-                padding: 16px !important;
-            }
-
-            .glass-card:hover {
-                transform: translateY(-2px);
-            }
-
-            .gradient-button:hover {
-                transform: translateY(-2px) scale(1.01);
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                font-size: 13px;
-            }
-
-            main {
-                padding: 8px 12px !important;
-                max-width: 100% !important;
-            }
-
-            h1 {
-                font-size: 1.25rem !important;
-            }
-
-            h2 {
-                font-size: 1.5rem !important;
-            }
-
-            h3 {
-                font-size: 1rem !important;
-            }
-
-            p {
-                font-size: 13px !important;
-            }
-
-            .glass-card {
-                padding: 16px !important;
-                border-radius: 16px !important;
-            }
-
-            .form-input {
-                padding: 10px 12px !important;
-                font-size: 16px !important;
-            }
-
-            .gradient-button {
-                padding: 11px 14px !important;
-                font-size: 13px !important;
-            }
-
-            .metric-badge {
-                padding: 12px !important;
-            }
-
-            .metric-badge .text-3xl {
-                font-size: 1.75rem !important;
-            }
-
-            header {
-                padding: 10px 0 !important;
-            }
-
-            header .max-w-4xl {
-                padding-left: 12px !important;
-                padding-right: 12px !important;
-            }
-
-            header h1 {
-                font-size: 1rem !important;
-            }
-
-            header .status-pulse {
-                width: 6px !important;
-                height: 6px !important;
-            }
-
-            .header-accent {
-                margin-top: 8px !important;
-            }
-
-            footer {
-                padding: 16px !important;
-            }
-
-            footer p {
-                font-size: 12px !important;
-            }
-        }
-
-        /* Smooth scrolling */
-        html {
-            scroll-behavior: smooth;
-        }
-
-        /* Touch-friendly adjustments */
-        @media (hover: none) and (pointer: coarse) {
-            .glass-card:hover {
-                transform: none;
-            }
-
-            .gradient-button:hover {
-                transform: none;
-            }
-
-            .metric-badge:hover {
-                transform: none;
-            }
-
-            .gradient-button:active {
-                transform: scale(0.97);
-            }
-        }
-
-        /* Header improvements */
-        header {
-            animation: slideDown 0.6s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Hero section animations */
-        .hero-title {
-            animation: titleReveal 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            opacity: 0;
-        }
-
-        .hero-subtitle {
-            animation: subtitleWelcome 1s cubic-bezier(0.23, 1, 0.32, 1) 0.5s forwards;
-            opacity: 0;
-        }
-
-        @keyframes titleReveal {
-            0% {
-                opacity: 0;
-                transform: translateY(-40px) scale(0.95);
-                filter: blur(8px);
-            }
-
-            50% {
-                opacity: 0.8;
-            }
-
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-                filter: blur(0);
-            }
-        }
-
-        @keyframes subtitleWelcome {
-            0% {
-                opacity: 0;
-                transform: translateY(30px) scale(0.9);
-                filter: blur(10px);
-            }
-
-            60% {
-                opacity: 0.9;
-            }
-
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-                filter: blur(0);
-            }
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Loading animation enhancement */
-        .loading-bar {
-            animation: heightPulse 0.6s ease-in-out infinite;
-        }
-
-        @keyframes heightPulse {
-
-            0%,
-            100% {
-                height: 100%;
-            }
-
-            50% {
-                height: 60%;
-            }
+        #statusCard {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
         }
     </style>
 </head>
 
-<body class="min-h-screen overflow-x-hidden">
-    <!-- Animated background gradient -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute top-0 left-1/4 w-64 md:w-96 h-64 md:h-96 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-3xl float-animate"
-            style="animation-delay: 0s;"></div>
-        <div class="absolute bottom-0 right-1/4 w-64 md:w-96 h-64 md:h-96 bg-gradient-to-tl from-emerald-500/10 to-transparent rounded-full blur-3xl float-animate"
-            style="animation-delay: 2s;"></div>
-    </div>
+<body>
 
-    <!-- Content -->
-    <div class="relative z-10">
-        <!-- Header -->
-        <header class="border-b border-slate-700/30 backdrop-blur-md sticky top-0 z-50">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4 md:py-4">
-                <div class="flex items-center justify-between mb-2.5 sm:mb-3">
-                    <div class="flex items-center gap-2">
-                        <div
-                            class="w-7 sm:w-8 md:w-9 h-7 sm:h-8 md:h-9 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center font-bold text-slate-900 text-sm sm:text-base md:text-base flex-shrink-0">
-                            ✓
-                        </div>
-                        <h1 class="text-base sm:text-lg md:text-xl font-bold gradient-text whitespace-nowrap">VeriTrust
-                            AI</h1>
-                    </div>
-                </div>
-                <div
-                    class="flex items-center gap-2 w-fit sm:w-full px-2 py-1.5 sm:py-2 rounded-lg bg-slate-800/40 border border-slate-700/50 justify-center sm:justify-start">
-                    <div class="w-2 h-2 bg-emerald-400 rounded-full status-pulse flex-shrink-0"></div>
-                    <span class="text-xs sm:text-sm font-medium text-slate-300 text-center sm:text-left">Oracle Node:
-                        Active</span>
-                </div>
-                <div class="header-accent mt-2.5 md:mt-3"></div>
+    <header>
+        <div class="logo">VERITRUST AI</div>
+        <div class="wallet-actions">
+            <div id="walletDisplay">Not Connected</div>
+            <button id="connectBtn" class="btn-connect">Connect Wallet</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <h1>Web Consensus Oracle</h1>
+            <p class="subtitle">Scrape real-world URL data and execute multi-validator LLM truth consensus.</p>
+
+            <div id="errorBanner"></div>
+
+            <div class="form-group">
+                <label for="urlInput">Target Content URL</label>
+                <input type="url" id="urlInput" placeholder="https://example.com/article" required>
             </div>
 
-            <!-- RPC Configuration Toggle -->
-            <div class="max-w-4xl mx-auto px-6 py-3 flex justify-end">
-                <button id="settingsToggle"
-                    class="text-sm text-slate-400 hover:text-slate-300 transition-colors flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-                        </path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    Settings
-                </button>
+            <div class="form-group">
+                <label for="claimInput">Target Validation Claim</label>
+                <input type="text" id="claimInput" placeholder="Enter specific data claim to verify..." required>
             </div>
 
-            <!-- RPC Settings Panel (Hidden by default) -->
-            <div id="settingsPanel"
-                class="hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-                <div class="glass-card rounded-2xl p-6 md:p-8 max-w-md w-full space-y-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold text-white">GenLayer Configuration</h3>
-                        <button id="settingsClose" class="text-slate-400 hover:text-slate-200 transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
+            <button id="verifyBtn" class="btn-main" disabled>Verify via GenLayer</button>
 
-                    <div>
-                        <label for="rpcUrl" class="block text-sm font-medium text-slate-300 mb-2">
-                            GenLayer RPC Endpoint
-                        </label>
-                        <input type="text" id="rpcUrl" placeholder="http://localhost:4000"
-                            class="w-full px-4 py-3 rounded-lg form-input text-sm" />
-                        <p class="text-xs text-slate-400 mt-2">
-                            Default: <code class="text-emerald-400">http://localhost:4000</code>
-                        </p>
-                    </div>
-
-                    <div>
-                        <label for="contractAddr" class="block text-sm font-medium text-slate-300 mb-2">
-                            Contract Address
-                        </label>
-                        <input type="text" id="contractAddr" placeholder="0x0000000000000000000000000000000000000000"
-                            class="w-full px-4 py-3 rounded-lg form-input text-sm font-mono" />
-                    </div>
-
-                    <div>
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" id="demoMode" class="w-4 h-4">
-                            <span class="text-sm text-slate-300">Use Demo Mode (offline)</span>
-                        </label>
-                        <p class="text-xs text-slate-400 mt-2">
-                            Enable to use mock data when network is unavailable
-                        </p>
-                    </div>
-
-                    <div class="flex gap-3">
-                        <button id="settingsSave"
-                            class="flex-1 gradient-button px-4 py-2 rounded-lg font-semibold text-sm transition-all active:scale-95">
-                            Save Settings
-                        </button>
-                        <button id="settingsReset"
-                            class="flex-1 px-4 py-2 rounded-lg border border-slate-600 text-slate-300 font-semibold text-sm hover:bg-slate-800/50 transition-all active:scale-95">
-                            Reset
-                        </button>
-                    </div>
-
-                    <div class="pt-4 border-t border-slate-700/30 text-xs text-slate-400">
-                        <p class="mb-2"><strong>To start a local GenLayer node:</strong></p>
-                        <code
-                            class="block bg-slate-800/50 p-2 rounded text-slate-300">npm install -g @genlayer/cli && genlayer serve</code>
-                    </div>
-                </div>
+            <div class="result-container">
+                <div class="result-title">Consensus Resolution Status</div>
+                <div id="statusCard">NOT_YET_EVALUATED</div>
             </div>
-        </header>
+        </div>
+    </main>
 
-        <!-- Main Content -->
-        <main class="max-w-4xl mx-auto px-6 py-16 lg:py-20">
-            <!-- Hero Section -->
-            <div class="mb-16 text-center">
-                <h2 class="text-4xl md:text-5xl font-bold mb-4 gradient-text hero-title">
-                    Verify On-Chain Truth
-                </h2>
-                <p class="text-lg md:text-base text-slate-400 max-w-2xl mx-auto hero-subtitle">
-                    Submit claims for consensus validation powered by GenLayer validators. Achieve cryptographic proof
-                    of verification through distributed consensus.
-                </p>
-            </div>
-
-            <!-- Form Container -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
-                <!-- Form Card -->
-                <div class="lg:col-span-2">
-                    <div class="glass-card rounded-2xl p-6 md:p-8 space-y-6">
-                        <h3 class="text-xl font-bold text-white mb-6">Submit Claim for Verification</h3>
-
-                        <form id="verifyForm" class="space-y-6">
-                            <!-- Target URL Input -->
-                            <div>
-                                <label for="targetUrl" class="block text-sm font-medium text-slate-300 mb-2">
-                                    Target URL
-                                </label>
-                                <input type="url" id="targetUrl" placeholder="https://example.com/data" required
-                                    class="w-full px-4 py-3 md:py-3 rounded-lg form-input" />
-                            </div>
-
-                            <!-- Claim Description Input -->
-                            <div>
-                                <label for="claimDescription" class="block text-sm font-medium text-slate-300 mb-2">
-                                    Claim Description
-                                </label>
-                                <textarea id="claimDescription" placeholder="Describe the claim you want to verify..."
-                                    rows="4" required
-                                    class="w-full px-4 py-3 md:py-3 rounded-lg form-input resize-none"></textarea>
-                            </div>
-
-                            <!-- Submit Button -->
-                            <button type="submit" id="submitBtn"
-                                class="w-full gradient-button py-3 md:py-3 rounded-lg font-semibold text-base md:text-lg transition-all duration-300 flex items-center justify-center gap-2 active:scale-95">
-                                <span id="btnText">Verify via GenLayer</span>
-                                <span id="btnSpinner" class="hidden">
-                                    <svg class="w-5 h-5 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                            stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                        </path>
-                                    </svg>
-                                </span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Info Card -->
-                <div class="lg:col-span-1">
-                    <div class="glass-card rounded-2xl p-6 md:p-8 h-full flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <span class="text-neon-mint">⚡</span> How It Works
-                            </h4>
-                            <ul class="space-y-3 text-sm text-slate-300">
-                                <li class="flex gap-2 stagger-item">
-                                    <span class="text-neon-mint font-bold flex-shrink-0">1.</span>
-                                    <span>Submit your claim and target URL</span>
-                                </li>
-                                <li class="flex gap-2 stagger-item">
-                                    <span class="text-neon-mint font-bold flex-shrink-0">2.</span>
-                                    <span>GenLayer validators assess the data</span>
-                                </li>
-                                <li class="flex gap-2 stagger-item">
-                                    <span class="text-neon-mint font-bold flex-shrink-0">3.</span>
-                                    <span>Consensus is reached and published</span>
-                                </li>
-                                <li class="flex gap-2 stagger-item">
-                                    <span class="text-neon-mint font-bold flex-shrink-0">4.</span>
-                                    <span>Receive cryptographic proof</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="mt-8 pt-6 border-t border-slate-700/30">
-                            <p class="text-xs text-slate-400">
-                                Powered by GenLayer consensus protocol
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Result Card (Initially Hidden) -->
-            <div id="resultContainer" class="hidden">
-                <div class="glass-card rounded-2xl p-6 md:p-8 result-card-enter">
-                    <div
-                        class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 mb-8">
-                        <h3 class="text-2xl md:text-3xl font-bold text-white">Verification Complete</h3>
-                        <button id="closeResult"
-                            class="text-slate-400 hover:text-slate-200 transition-colors active:scale-90"
-                            onclick="closeResult()">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Consensus Status -->
-                    <div
-                        class="mb-8 p-6 rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 animate-pulse">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-3 h-3 bg-emerald-400 rounded-full status-pulse"></div>
-                            <span class="text-lg font-bold text-emerald-400">Consensus Achieved</span>
-                        </div>
-                        <p class="text-slate-300 text-sm md:text-base">All validators have reached agreement on the
-                            submitted claim.</p>
-                    </div>
-
-                    <!-- Metrics Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-8">
-                        <!-- Validator Agreement -->
-                        <div class="metric-badge rounded-lg p-6 text-center">
-                            <div class="text-3xl font-bold text-emerald-400 mb-2" data-metric="agreement">—</div>
-                            <div class="text-sm text-slate-400">Validator Agreement</div>
-                        </div>
-
-                        <!-- Validator Count -->
-                        <div class="metric-badge rounded-lg p-6 text-center">
-                            <div class="text-3xl font-bold text-cyan-400 mb-2" data-metric="count">—</div>
-                            <div class="text-sm text-slate-400">Validators Participated</div>
-                        </div>
-
-                        <!-- Consensus Hash -->
-                        <div class="metric-badge rounded-lg p-6">
-                            <div class="text-sm text-slate-400 mb-2">Consensus Hash</div>
-                            <div class="text-xs font-mono text-emerald-400 break-all" data-metric="hash">—</div>
-                        </div>
-
-                        <!-- Block Reference -->
-                        <div class="metric-badge rounded-lg p-6">
-                            <div class="text-sm text-slate-400 mb-2">Block Reference</div>
-                            <div class="text-xs font-mono text-cyan-400" data-metric="block">—</div>
-                        </div>
-                    </div>
-
-                    <!-- Verification Details -->
-                    <div class="mb-8">
-                        <h4 class="text-sm font-bold text-white mb-4">Verified Claim Summary</h4>
-                        <div class="bg-slate-800/30 rounded-lg p-6 border border-slate-700/30 space-y-4">
-                            <div>
-                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Target
-                                    URL</div>
-                                <div id="resultUrl" class="text-slate-300 font-mono text-xs md:text-sm break-all">—
-                                </div>
-                            </div>
-                            <div class="border-t border-slate-700/30 pt-4">
-                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Claim
-                                    Assessment</div>
-                                <div id="resultClaim" class="text-slate-300 text-sm leading-relaxed">—</div>
-                            </div>
-                            <div class="border-t border-slate-700/30 pt-4">
-                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Truth
-                                    State</div>
-                                <div class="text-emerald-400 font-semibold text-sm">
-                                    ✓ Verified and Consensus-Backed
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-3 md:gap-4">
-                        <button onclick="closeResult()"
-                            class="flex-1 px-6 py-3 rounded-lg border border-slate-600 text-slate-300 font-semibold hover:bg-slate-800/50 transition-all duration-300 active:scale-95">
-                            New Verification
-                        </button>
-                        <button onclick="exportResult()"
-                            class="flex-1 gradient-button px-6 py-3 rounded-lg font-semibold transition-all duration-300 active:scale-95">
-                            Export Proof
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Loading State (Initially Hidden) -->
-            <div id="loadingContainer" class="hidden">
-                <div class="glass-card rounded-2xl p-8 md:p-12 text-center">
-                    <svg class="w-12 md:w-16 h-12 md:h-16 spinner mx-auto mb-6 text-emerald-400" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                        </circle>
-                        <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                        </path>
-                    </svg>
-                    <h3 class="text-xl md:text-2xl font-bold text-white mb-2">Validating Claim</h3>
-                    <p class="text-slate-400 text-sm md:text-base">Requesting consensus from GenLayer validators...</p>
-                    <div class="mt-6 flex gap-1 justify-center items-end h-8">
-                        <div class="w-1 bg-emerald-400 rounded-full loading-bar" style="animation-delay: 0s;"></div>
-                        <div class="w-1 bg-cyan-400 rounded-full loading-bar" style="animation-delay: 0.2s;"></div>
-                        <div class="w-1 bg-emerald-400 rounded-full loading-bar" style="animation-delay: 0.4s;"></div>
-                        <div class="w-1 bg-cyan-400 rounded-full loading-bar" style="animation-delay: 0.6s;"></div>
-                        <div class="w-1 bg-emerald-400 rounded-full loading-bar" style="animation-delay: 0.8s;"></div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- Footer -->
-        <footer class="border-t border-slate-700/30 mt-16 md:mt-20">
-            <div class="max-w-6xl mx-auto px-6 py-8 text-center text-slate-500 text-xs md:text-sm">
-                <p>VeriTrust AI © 2026. Powered by GenLayer consensus protocol for decentralized verification.</p>
-            </div>
-        </footer>
-    </div>
-
-    <script>
-        // ============================================
-        // GENLAYER NETWORK CONFIGURATION
-        // ============================================
-
-        let GENLAYER_RPC_URL = localStorage.getItem('genlayerRpcUrl') || 'http://localhost:4000';
-        let CONTRACT_ADDRESS = localStorage.getItem('contractAddress') || '0xFa1C9aAE5FFFA7a76b6BC6f021f75BFcbe244EC6';
-        let DEMO_MODE = localStorage.getItem('demoMode') === 'true';
-
-        // ============================================
-        // STATE MANAGEMENT
-        // ============================================
-
-        let verificationResult = null;
-
-        // ============================================
-        // SETTINGS PANEL MANAGEMENT
-        // ============================================
-
-        const settingsToggle = document.getElementById('settingsToggle');
-        const settingsClose = document.getElementById('settingsClose');
-        const settingsPanel = document.getElementById('settingsPanel');
-        const settingsSave = document.getElementById('settingsSave');
-        const settingsReset = document.getElementById('settingsReset');
-        const rpcUrlInput = document.getElementById('rpcUrl');
-        const contractAddrInput = document.getElementById('contractAddr');
-        const demoModeInput = document.getElementById('demoMode');
-
-        // Load settings into UI
-        rpcUrlInput.value = GENLAYER_RPC_URL;
-        contractAddrInput.value = CONTRACT_ADDRESS;
-        demoModeInput.checked = DEMO_MODE;
-
-        // Toggle settings panel
-        settingsToggle.addEventListener('click', () => {
-            settingsPanel.classList.toggle('hidden');
-        });
-
-        settingsClose.addEventListener('click', () => {
-            settingsPanel.classList.add('hidden');
-        });
-
-        // Click outside to close
-        settingsPanel.addEventListener('click', (e) => {
-            if (e.target === settingsPanel) {
-                settingsPanel.classList.add('hidden');
-            }
-        });
-
-        // Save settings
-        settingsSave.addEventListener('click', () => {
-            GENLAYER_RPC_URL = rpcUrlInput.value || 'http://localhost:4000';
-            CONTRACT_ADDRESS = contractAddrInput.value || '0x0000000000000000000000000000000000000000';
-            DEMO_MODE = demoModeInput.checked;
-
-            localStorage.setItem('genlayerRpcUrl', GENLAYER_RPC_URL);
-            localStorage.setItem('contractAddress', CONTRACT_ADDRESS);
-            localStorage.setItem('demoMode', DEMO_MODE);
-
-            settingsPanel.classList.add('hidden');
-            alert('Settings saved successfully!');
-            console.log('GenLayer Config:', { GENLAYER_RPC_URL, CONTRACT_ADDRESS, DEMO_MODE });
-        });
-
-        // Reset to defaults
-        settingsReset.addEventListener('click', () => {
-            const defaults = {
-                rpc: 'http://localhost:4000',
-                contract: '0xFa1C9aAE5FFFA7a76b6BC6f021f75BFcbe244EC6',
-                demo: false
-            };
-
-            rpcUrlInput.value = defaults.rpc;
-            contractAddrInput.value = defaults.contract;
-            demoModeInput.checked = defaults.demo;
-
-            GENLAYER_RPC_URL = defaults.rpc;
-            CONTRACT_ADDRESS = defaults.contract;
-            DEMO_MODE = defaults.demo;
-
-            localStorage.setItem('genlayerRpcUrl', GENLAYER_RPC_URL);
-            localStorage.setItem('contractAddress', CONTRACT_ADDRESS);
-            localStorage.setItem('demoMode', DEMO_MODE);
-
-            alert('Settings reset to defaults');
-        });
-
-        // ============================================
-        // DIRECT CONTRACT STATE READ HANDLER
-        // ============================================
-
-        /**
-         * Fetch verification result directly from GenLayer Intelligent Contract
-         */
-        async function fetchVerificationData(targetUrl, claimDescription) {
-            try {
-                // Execute real network request to GenLayer using the GenLayerClient
-                const client = new GenLayerClient(GENLAYER_RPC_URL, CONTRACT_ADDRESS);
-                
-                console.log('Sending transaction to contract:', CONTRACT_ADDRESS);
-                const txHash = await client.verifyWebClaim(targetUrl, claimDescription);
-
-                // Simulate waiting for consensus block confirmation
-                await new Promise(resolve => setTimeout(resolve, 3000));
-
-                console.log('Getting verification status from contract...');
-                const result = await client.getVerificationStatus(targetUrl, claimDescription);
-                
-                console.log('Contract verdict:', result);
-                
-                // Parse response and construct verification object
-                return {
-                    targetUrl: targetUrl,
-                    claim: claimDescription,
-                    consensusHash: txHash || '0x' + Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
-                    blockReference: 'Latest',
-                    validatorAgreement: 'Consensus Achieved',
-                    validatorsParticipated: 5,
-                    truthState: result,
-                    consensusReached: true,
-                    verdict: result,
-                    contractState: result
-                };
-            } catch (networkError) {
-                console.error('Network verification failed:', networkError);
-                throw new Error(`Failed to interact with GenLayer contract: ${networkError.message}`);
-            }
-        }
-
-        // ============================================
-        // DOM ELEMENTS
-        // ============================================
-
-        const verifyForm = document.getElementById('verifyForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const btnText = document.getElementById('btnText');
-        const btnSpinner = document.getElementById('btnSpinner');
-        const resultContainer = document.getElementById('resultContainer');
-        const loadingContainer = document.getElementById('loadingContainer');
-
-        // ============================================
-        // FORM SUBMISSION WITH REAL NETWORK HANDSHAKE
-        // ============================================
-
-        verifyForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const targetUrl = document.getElementById('targetUrl').value;
-            const claimDescription = document.getElementById('claimDescription').value;
-
-            // Disable form and show loading state
-            submitBtn.disabled = true;
-            btnText.classList.add('hidden');
-            btnSpinner.classList.remove('hidden');
-            loadingContainer.classList.remove('hidden');
-            resultContainer.classList.add('hidden');
-
-            try {
-                // Execute authentic async network handshake with GenLayer
-                verificationResult = await fetchVerificationData(targetUrl, claimDescription);
-
-                // Bind UI response to Promise resolution
-                loadingContainer.classList.add('hidden');
-                resultContainer.classList.remove('hidden');
-                displayVerificationResult(verificationResult);
-
-                // Scroll to results
-                resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } catch (error) {
-                // Capture runtime errors and display gracefully in output window
-                console.error('Verification error:', error);
-
-                // Show error state in the UI
-                loadingContainer.classList.add('hidden');
-                resultContainer.classList.remove('hidden');
-
-                displayErrorResult(error);
-                resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } finally {
-                // Re-enable form button
-                submitBtn.disabled = false;
-                btnText.classList.remove('hidden');
-                btnSpinner.classList.add('hidden');
-            }
-        });
-
-        // ============================================
-        // RESULT DISPLAY & ERROR HANDLING
-        // ============================================
-
-        function displayVerificationResult(result) {
-            // Display URL and claim from successful verification
-            document.getElementById('resultUrl').textContent = result.targetUrl;
-            document.getElementById('resultClaim').textContent = result.claim;
-
-            // Update metrics with verified data from contract state
-            updateMetrics(result);
-
-            // Update consensus status
-            const consensusStatus = resultContainer.querySelector('.bg-gradient-to-r');
-            if (consensusStatus) {
-                let statusColor = "emerald-400";
-                let statusText = "Consensus Achieved";
-                
-                if (result.truthState === "VERIFIED") {
-                    statusColor = "emerald-400";
-                    statusText = "Claim Verified By Consensus";
-                    consensusStatus.className = `mb-8 p-6 rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 animate-pulse`;
-                } else if (result.truthState === "REFUTED" || result.truthState === "INSUFFICIENT_DATA") {
-                    statusColor = "rose-400";
-                    statusText = "Claim Rejected/Insufficient Data";
-                    consensusStatus.className = `mb-8 p-6 rounded-xl bg-gradient-to-r from-rose-500/10 to-orange-500/10 border border-rose-500/20 animate-pulse`;
-                } else {
-                    consensusStatus.className = `mb-8 p-6 rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 animate-pulse`;
-                }
-
-                consensusStatus.innerHTML = `
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-3 h-3 bg-${statusColor} rounded-full status-pulse"></div>
-                        <span class="text-lg font-bold text-${statusColor}">${statusText}</span>
-                    </div>
-                    <p class="text-slate-300 text-sm md:text-base">Validators evaluated the evidence. Verdict: ${result.truthState}</p>
-                `;
-            }
-        }
-
-        /**
-         * Display error state when network call fails
-         * Shows user-friendly error message from caught exception
-         */
-        function displayErrorResult(error) {
-            // Clear previous results
-            document.getElementById('resultUrl').textContent = 'N/A';
-            document.getElementById('resultClaim').textContent = 'N/A';
-            updateMetrics({
-                validatorAgreement: 'ERROR',
-                validatorsParticipated: 0,
-                consensusHash: 'N/A',
-                blockReference: 'N/A'
-            });
-
-            // Display error in consensus status area
-            const consensusStatus = resultContainer.querySelector('.bg-gradient-to-r');
-            if (consensusStatus) {
-                consensusStatus.className = 'mb-8 p-6 rounded-xl bg-gradient-to-r from-red-500/10 to-rose-500/10 border border-red-500/20 animate-pulse';
-                consensusStatus.innerHTML = `
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-3 h-3 bg-red-400 rounded-full"></div>
-                        <span class="text-lg font-bold text-red-400">Network Error</span>
-                    </div>
-                    <p class="text-slate-300 text-sm md:text-base">${error.message || 'Error: Unable to read contract state from RPC target.'}</p>
-                `;
-            }
-
-            // Update result title
-            const resultTitle = resultContainer.querySelector('h3');
-            if (resultTitle) {
-                resultTitle.textContent = 'Verification Failed';
-            }
-        }
-
-        /**
-         * Update dashboard UI metrics with live contract state data
-         * Maps verified trust outputs to metric badge text fields
-         */
-        function updateMetrics(result) {
-            // Update validator agreement (Verification Status)
-            const agreementElements = document.querySelectorAll('[data-metric="agreement"]');
-            agreementElements.forEach(el => el.textContent = result.validatorAgreement);
-
-            // Update validator count (Consensus Count)
-            const countElements = document.querySelectorAll('[data-metric="count"]');
-            countElements.forEach(el => el.textContent = result.validatorsParticipated);
-
-            // Update consensus hash from contract storage
-            const hashElements = document.querySelectorAll('[data-metric="hash"]');
-            hashElements.forEach(el => el.textContent = result.consensusHash);
-
-            // Update block reference from contract state
-            const blockElements = document.querySelectorAll('[data-metric="block"]');
-            blockElements.forEach(el => el.textContent = result.blockReference);
-        }
-
-        function closeResult() {
-            resultContainer.classList.add('hidden');
-            verifyForm.reset();
-            loadingContainer.classList.add('hidden');
-            verificationResult = null;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function exportResult() {
-            if (!verificationResult) {
-                alert('No verification result to export.');
-                return;
-            }
-
-            const json = JSON.stringify(verificationResult, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `veritrust-proof-${Date.now()}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-    </script>
     <script src="genlayerclient.js"></script>
     <script src="app.js"></script>
 </body>
