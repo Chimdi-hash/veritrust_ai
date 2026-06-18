@@ -1,14 +1,12 @@
-// 1. Initialize configuration parameters
-// REPLACE with your live deployed hexadecimal contract address from GenLayer Studio
+// 1. Initialize configuration values
+// REMEMBER to change this placeholder string to your actual deployed address!
 const CONTRACT_ADDRESS = 'YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE';
-
-// Use GenLayer's production endpoint for live web deployments
 const RPC_URL = 'https://studio.genlayer.com/api';
 
 const client = new GenLayerClient(RPC_URL);
 
 // 2. DOM Elements Mapping
-const connectBtn = document.getElementById('connectBtn'); // Make sure you have this button in your HTML!
+const connectBtn = document.getElementById('connectBtn');
 const walletDisplay = document.getElementById('walletDisplay');
 const verifyBtn = document.getElementById('verifyBtn');
 const urlInput = document.getElementById('urlInput');
@@ -16,7 +14,7 @@ const claimInput = document.getElementById('claimInput');
 const statusCard = document.getElementById('statusCard');
 const errorBanner = document.getElementById('errorBanner');
 
-// 3. Wallet Connection Action Listener
+// 3. Wallet Connection Interaction Handler
 if (connectBtn) {
     connectBtn.addEventListener('click', async () => {
         hideUiError();
@@ -25,9 +23,8 @@ if (connectBtn) {
 
         try {
             const address = await client.connectWallet();
-            console.log('Wallet authenticated successfully:', address);
+            console.log('Successfully connected:', address);
 
-            // Format address for visual clarity
             const shortAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 
             if (walletDisplay) {
@@ -36,55 +33,50 @@ if (connectBtn) {
             }
 
             connectBtn.innerText = 'Wallet Connected';
-            connectBtn.style.backgroundColor = '#10B981'; // Green accent indicating success
+            connectBtn.style.backgroundColor = '#10B981';
 
-            // Enable main call actions now that wallet metadata exists
             if (verifyBtn) verifyBtn.disabled = false;
 
         } catch (error) {
-            console.error('Wallet connection rejected:', error);
-            showUiError(error.message || 'Failed to authenticate wallet connection.');
+            console.error('Wallet connection failed:', error);
+            showUiError(error.message || 'Failed to authorize wallet extension.');
             connectBtn.innerText = 'Connect Wallet';
             connectBtn.disabled = false;
         }
     });
 }
 
-// 4. Verification Form Submission Action Listener
+// 4. Main Contract Action Transaction Form Submission
 if (verifyBtn) {
-    // Initially disable until wallet connection state is established
-    verifyBtn.disabled = true;
-
     verifyBtn.addEventListener('click', async () => {
         const url = urlInput.value.trim();
         const claim = claimInput.value.trim();
 
         if (!url || !claim) {
-            showUiError('Please fill out both the URL and Claim fields.');
-            return;
-        }
-
-        if (!client.userAddress) {
-            showUiError('Please connect your browser wallet first.');
+            showUiError('Please fill out both the target URL and Claim input fields.');
             return;
         }
 
         setLoadingState(true);
         hideUiError();
+        updateDashboardStatus('AWAITING CONSENSUS...');
 
         try {
-            console.log('Requesting transaction signature via user wallet...');
+            console.log('Sending transaction direct to GenLayer endpoint...');
             const txHash = await client.verifyWebClaim(CONTRACT_ADDRESS, url, claim);
-            console.log('Transaction signed and broadcasted! Hash:', txHash);
+            console.log('Transaction broadcasted successfully! Hash identifier:', txHash);
 
-            console.log('Fetching on-chain consensus resolution from storage...');
+            // Give Studionet a brief moment to process the state change block
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            console.log('Reading updated response state from contract mapping arrays...');
             const consensusResult = await client.getVerificationStatus(CONTRACT_ADDRESS, url, claim);
 
             updateDashboardStatus(consensusResult);
 
         } catch (error) {
-            console.error('Blockchain action failed:', error);
-            showUiError(`Transaction Error: ${error.message || 'Signature request rejected.'}`);
+            console.error('Handshake verification failed:', error);
+            showUiError(`Transaction Error: ${error.message || 'Execution error.'}`);
             updateDashboardStatus('ERROR');
         } finally {
             setLoadingState(false);
@@ -92,7 +84,6 @@ if (verifyBtn) {
     });
 }
 
-// 5. Interface State Helpers
 function setLoadingState(isLoading) {
     if (isLoading) {
         verifyBtn.disabled = true;
@@ -109,6 +100,7 @@ function updateDashboardStatus(result) {
         if (result === 'VERIFIED') statusCard.style.color = '#10B981';
         else if (result === 'REFUTED') statusCard.style.color = '#EF4444';
         else if (result === 'ERROR') statusCard.style.color = '#F59E0B';
+        else if (result === 'AWAITING CONSENSUS...') statusCard.style.color = '#3B82F6';
         else statusCard.style.color = '#FFFFFF';
     }
 }
@@ -120,6 +112,7 @@ function showUiError(message) {
     }
 }
 
+// Clear old runtime messages
 function hideUiError() {
     if (errorBanner) {
         errorBanner.style.display = 'none';
