@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { createClient } from 'genlayer-js';
-import { simulator } from 'genlayer-js/chains';
+import { testnetBradbury } from 'genlayer-js/chains';
 
 // Replace this with the actual Genlayer contract address
 export const CONTRACT_ADDRESS = '0x2CbB2349ad30f5aB5ECEa4DbcdEa330CacB9eD16';
-// We use the simulator chain from genlayer-js for the studio, or fallback to custom chain configuration if needed.
-// 'simulator' corresponds to the studio API.
+// We use the testnetBradbury chain from genlayer-js as requested
 
 export function useGenlayer() {
   const [address, setAddress] = useState<string | null>(null);
@@ -41,7 +40,7 @@ export function useGenlayer() {
 
     // Create the write client with window.ethereum to trigger the MetaMask popup
     const writeClient = createClient({
-      chain: simulator,
+      chain: testnetBradbury,
       account: address as `0x${string}`,
       provider: window.ethereum,
     });
@@ -62,7 +61,7 @@ export function useGenlayer() {
   const getVerificationStatus = async (url: string, claim: string): Promise<string> => {
     // Read client doesn't strictly need the provider for signing
     const readClient = createClient({
-      chain: simulator,
+      chain: testnetBradbury,
     });
 
     try {
