@@ -75,7 +75,7 @@ export default function Home() {
                 key="connected"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}
+                className={styles.addressContainer}
               >
                 <div className={styles.addressBadge}>
                   {address.substring(0, 6)}...{address.substring(address.length - 4)}

@@ -254,23 +254,84 @@
   color: #f87171;
 }
 
+.addressContainer {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
 @media (max-width: 640px) {
   .header {
     flex-direction: column;
-    padding: 1rem;
-    gap: 1rem;
+    padding: 1.25rem 1rem;
+    gap: 1.25rem;
+    background: rgba(15, 23, 42, 0.85);
   }
-  .main {
-    padding: 2rem 1rem;
+  
+  .logo {
+    font-size: 1.25rem;
   }
-  .card {
-    padding: 1.5rem;
-  }
-  .title {
-    font-size: 1.75rem;
-  }
+  
   .walletActions {
     width: 100%;
     justify-content: center;
+  }
+
+  .main {
+    padding: 1.5rem 1rem;
+  }
+
+  .card {
+    padding: 2rem 1.25rem;
+    border-radius: 20px;
+  }
+
+  .title {
+    font-size: 1.6rem;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
+  }
+
+  .input {
+    font-size: 0.95rem;
+    padding: 0.875rem 1.25rem;
+    padding-left: 2.75rem !important;
+  }
+
+  .btnSubmit {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  .statusCard {
+    font-size: 1.25rem;
+    word-break: break-word;
+    padding: 0 0.5rem;
+  }
+  
+  .addressBadge {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .btnDisconnect {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .statusCard {
+    font-size: 1.1rem;
+  }
+  
+  .addressContainer {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
