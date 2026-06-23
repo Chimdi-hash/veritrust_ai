@@ -237,3 +237,40 @@
   letter-spacing: 0.05em;
   text-shadow: 0 0 20px currentColor;
 }
+
+.btnDisconnect {
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 99px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnDisconnect:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  .main {
+    padding: 2rem 1rem;
+  }
+  .card {
+    padding: 1.5rem;
+  }
+  .title {
+    font-size: 1.75rem;
+  }
+  .walletActions {
+    width: 100%;
+    justify-content: center;
+  }
+}

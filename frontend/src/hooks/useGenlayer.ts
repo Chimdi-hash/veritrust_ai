@@ -24,6 +24,33 @@ export function useGenlayer() {
         throw new Error('Connection rejected by user.');
       }
       
+      // Attempt to switch to Bradbury testnet
+      const chainIdHex = `0x${testnetBradbury.id.toString(16)}`;
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: chainIdHex }],
+        });
+      } catch (switchError: any) {
+        // This error code indicates that the chain has not been added to MetaMask.
+        if (switchError.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: chainIdHex,
+                chainName: testnetBradbury.name,
+                rpcUrls: [...testnetBradbury.rpcUrls.default.http],
+                nativeCurrency: testnetBradbury.nativeCurrency,
+                blockExplorerUrls: testnetBradbury.blockExplorers ? [testnetBradbury.blockExplorers.default.url] : [],
+              },
+            ],
+          });
+        } else {
+          throw switchError;
+        }
+      }
+      
       setAddress(accounts[0]);
     } catch (err: any) {
       console.error('Wallet connection error:', err);
@@ -31,6 +58,11 @@ export function useGenlayer() {
     } finally {
       setIsConnecting(false);
     }
+  };
+
+  const disconnectWallet = () => {
+    setAddress(null);
+    setError(null);
   };
 
   const verifyWebClaim = async (url: string, claim: string): Promise<string> => {
@@ -82,6 +114,7 @@ export function useGenlayer() {
     error,
     setError,
     connectWallet,
+    disconnectWallet,
     verifyWebClaim,
     getVerificationStatus
   };

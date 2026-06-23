@@ -7,7 +7,7 @@ import { useGenlayer } from '@/hooks/useGenlayer';
 import styles from './page.module.css';
 
 export default function Home() {
-  const { address, isConnecting, error, setError, connectWallet, verifyWebClaim, getVerificationStatus } = useGenlayer();
+  const { address, isConnecting, error, setError, connectWallet, disconnectWallet, verifyWebClaim, getVerificationStatus } = useGenlayer();
   
   const [url, setUrl] = useState('');
   const [claim, setClaim] = useState('');
@@ -75,9 +75,18 @@ export default function Home() {
                 key="connected"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={styles.addressBadge}
+                style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}
               >
-                {address.substring(0, 6)}...{address.substring(address.length - 4)}
+                <div className={styles.addressBadge}>
+                  {address.substring(0, 6)}...{address.substring(address.length - 4)}
+                </div>
+                <button 
+                  onClick={disconnectWallet}
+                  className={styles.btnDisconnect}
+                  title="Disconnect Wallet"
+                >
+                  Disconnect
+                </button>
               </motion.div>
             ) : (
               <motion.button 
