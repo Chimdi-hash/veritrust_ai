@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { createClient } from 'genlayer-js';
+import { simulator } from 'genlayer-js/chains';
 
 // Replace this with the actual Genlayer contract address
 export const CONTRACT_ADDRESS = '0x2CbB2349ad30f5aB5ECEa4DbcdEa330CacB9eD16';
-const RPC_URL = 'https://studio.genlayer.com/api';
+// We use the simulator chain from genlayer-js for the studio, or fallback to custom chain configuration if needed.
+// 'simulator' corresponds to the studio API.
 
 export function useGenlayer() {
   const [address, setAddress] = useState<string | null>(null);
@@ -36,67 +39,42 @@ export function useGenlayer() {
       throw new Error('Wallet not connected!');
     }
 
-    const response = await fetch(RPC_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: Date.now(),
-        method: 'gen_sendTransaction',
-        params: {
-          from: address,
-          to: CONTRACT_ADDRESS,
-          data: {
-            method: 'verify_web_claim',
-            args: [url, claim]
-          }
-        }
-      })
+    // Create the write client with window.ethereum to trigger the MetaMask popup
+    const writeClient = createClient({
+      chain: simulator,
+      account: address as `0x${string}`,
+      provider: window.ethereum,
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP network error: ${response.status}`);
+    try {
+      // This will trigger the MetaMask popup for the user to confirm the transaction and pay GEN token gas
+      const transactionHash = await writeClient.writeContract({
+        address: CONTRACT_ADDRESS as `0x${string}`,
+        functionName: 'verify_web_claim',
+        args: [url, claim],
+      });
+      return transactionHash;
+    } catch (err: any) {
+      throw new Error(err.message || 'Transaction rejected or failed.');
     }
-
-    const data = await response.json();
-    if (data.error) {
-      throw new Error(data.error.message || 'GenLayer Execution Error');
-    }
-
-    return data.result;
   };
 
   const getVerificationStatus = async (url: string, claim: string): Promise<string> => {
-    const response = await fetch(RPC_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: Date.now(),
-        method: 'gen_callMethod',
-        params: {
-          from: address || '0x0000000000000000000000000000000000000000',
-          to: CONTRACT_ADDRESS,
-          method: 'get_verification_status',
-          args: [url, claim]
-        }
-      })
+    // Read client doesn't strictly need the provider for signing
+    const readClient = createClient({
+      chain: simulator,
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP View Error: ${response.status}`);
+    try {
+      const result = await readClient.readContract({
+        address: CONTRACT_ADDRESS as `0x${string}`,
+        functionName: 'get_verification_status',
+        args: [url, claim],
+      });
+      return result as string;
+    } catch (err: any) {
+      throw new Error(err.message || 'Failed to read from contract.');
     }
-
-    const data = await response.json();
-    if (data.error) {
-      throw new Error(data.error.message);
-    }
-
-    return data.result;
   };
 
   return {
