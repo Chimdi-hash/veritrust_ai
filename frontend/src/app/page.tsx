@@ -192,7 +192,17 @@ export default function Home() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 15 }}
             >
-              {status}
+              {status === 'NOT_YET_EVALUATED' ? (
+                <span style={{ opacity: 0.6, fontSize: '0.7em', letterSpacing: '0.2em', fontFamily: 'monospace' }}>
+                  [ SYSTEM_STANDBY ]
+                </span>
+              ) : status === 'AWAITING CONSENSUS...' ? (
+                <span style={{ letterSpacing: '0.1em' }}>
+                  /// SYNCHRONIZING ///
+                </span>
+              ) : (
+                status
+              )}
             </motion.div>
           </motion.div>
         </motion.div>
