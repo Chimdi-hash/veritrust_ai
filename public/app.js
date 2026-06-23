@@ -1,6 +1,6 @@
 // 1. Initialize configuration values
 // REMEMBER to change this placeholder string to your actual deployed address!
-const CONTRACT_ADDRESS = 'YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE';
+const CONTRACT_ADDRESS = '0x2CbB2349ad30f5aB5ECEa4DbcdEa330CacB9eD16';
 const RPC_URL = 'https://studio.genlayer.com/api';
 
 const client = new GenLayerClient(RPC_URL);
