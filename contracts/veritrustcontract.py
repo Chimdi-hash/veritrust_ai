@@ -34,7 +34,8 @@ class VeriTrustAI(gl.Contract):
                 f"User Claim: '{claim}'\n\n"
                 f"Does the content support the claim? Respond in this exact format:\n"
                 f"<VERDICT>|<SHORT_REMARK>\n"
-                f"Where <VERDICT> is either 'VERIFIED', 'REFUTED', or 'INSUFFICIENT_DATA', and <SHORT_REMARK> is a 1-2 sentence explanation."
+                f"Where <VERDICT> is 'VERIFIED', 'REFUTED', or 'INSUFFICIENT_DATA'.\n"
+                f"For <SHORT_REMARK>, provide a direct quote (max 1 sentence) from the text that justifies the verdict. If INSUFFICIENT_DATA, write 'No relevant information found.'"
             )
 
             # Gather decentralized LLM consensus

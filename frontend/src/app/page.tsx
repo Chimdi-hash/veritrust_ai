@@ -56,7 +56,7 @@ export default function Home() {
   };
 
   const [verdict, ...remarkParts] = status.split('|');
-  const remark = remarkParts.join('|');
+  const remark = remarkParts.join('|').trim();
 
   const getStatusColor = () => {
     if (verdict === 'VERIFIED') return 'var(--accent)';
