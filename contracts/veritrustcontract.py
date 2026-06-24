@@ -24,8 +24,9 @@ class VeriTrustAI(gl.Contract):
         """
         # Step 1: Execute non-deterministic tasks inside GenLayer's strict equivalence principle block
         with gl.eq_principle.prompt_comparative:
-            # Safely scrape text content from the target web address
-            web_data = gl.nondet.web.get(url, mode="text")
+            # Safely scrape text content from the target web address and truncate to prevent LLM context limits
+            raw_web_data = gl.nondet.web.get(url, mode="text")
+            web_data = raw_web_data[:12000] if raw_web_data else ""
 
             # Craft the structured verification instructions for the validator nodes
             prompt = (
