@@ -13,7 +13,8 @@ class VeriTrustAI(gl.Contract):
     # Persistent storage using GenLayer's strict TreeMap structure
     verified_claims: TreeMap[str, str]
 
-
+    def __init__(self):
+        pass
 
     @gl.public.write
     def verify_web_claim(self, url: str, claim: str) -> str:
