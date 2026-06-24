@@ -3,7 +3,7 @@ import { createClient } from 'genlayer-js';
 import { studionet } from 'genlayer-js/chains';
 
 // Replace this with the actual Genlayer contract address
-export const CONTRACT_ADDRESS = '0xA1b3BCBf6bC6206Adcd69c57039cb56C97cDABa3';
+export const CONTRACT_ADDRESS = '0x5b87963640EAB4B58748bf0EBa043f142A21430e';
 // We use the studionet chain from genlayer-js as requested
 
 export function useGenlayer() {
