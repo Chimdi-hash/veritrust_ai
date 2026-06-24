@@ -90,7 +90,7 @@ export function useGenlayer() {
         hash: transactionHash
       });
       
-      if (receipt.status === 'reverted') {
+      if (String(receipt.status) === 'reverted' || String(receipt.status) === '0') {
         throw new Error('Transaction reverted by the network (e.g., invalid URL, timeout, or consensus failure).');
       }
 
