@@ -26,21 +26,24 @@ export default function Home() {
     setStatus('AWAITING CONSENSUS...');
     
     try {
+      const cleanUrl = url.trim();
+      const cleanClaim = claim.trim();
+
       // 1. Submit the transaction to Genlayer
-      await verifyWebClaim(url, claim);
+      await verifyWebClaim(cleanUrl, cleanClaim);
       
-      // 2. Poll for the result after giving Studionet a brief moment to process the state change block
+      // 2. Poll for the result
       let consensusResult = 'NOT_YET_EVALUATED';
       let attempts = 0;
-      const maxAttempts = 30; // 90 seconds max
+      const maxAttempts = 120; // 6 minutes max
       while (consensusResult === 'NOT_YET_EVALUATED' && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 3000));
-        consensusResult = await getVerificationStatus(url, claim);
+        consensusResult = await getVerificationStatus(cleanUrl, cleanClaim);
         attempts++;
       }
       
       if (consensusResult === 'NOT_YET_EVALUATED') {
-        throw new Error('Verification timed out. Network is taking too long.');
+        throw new Error('Verification timed out. GenLayer testnet is taking too long to propagate state.');
       }
       
       setStatus(consensusResult);
