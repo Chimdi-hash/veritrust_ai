@@ -23,32 +23,22 @@ class VeriTrustAI(gl.Contract):
         Executes an intelligent read of the provided URL and uses Genlayer's LLM consensus 
         to verify if the claim holds true based on the webpage content.
         """
-        
-        # Enforce Wikipedia domain strictness at the contract level
-        if "wikipedia.org" not in url.lower():
-            consensus_result = "ERROR: URL must be a Wikipedia article"
-            storage_key = f"{url}::{claim}"
-            self.verified_claims[storage_key] = consensus_result
-            return consensus_result
-
         with gl.eq_principle.prompt_comparative:
             # Safely scrape text content from the target web address
             web_data = gl.nondet.web.get(url, mode="text")
             
             # Craft the structured verification instructions tailored for Wikipedia
-            prompt = f"""
-            You are a highly analytical Wikipedia Fact Checker on the GenLayer network.
-            Your task is to analyze the following Wikipedia article text and determine if the user's factual claim is objectively supported by the article.
-            
-            [USER FACTUAL CLAIM]: {claim}
-            [WIKIPEDIA ARTICLE EXTRACT]: {web_data}
-            
-            Rules:
-            1. If the claim is explicitly supported by the Wikipedia text, output exactly 'VERIFIED'.
-            2. If the claim is explicitly contradicted by the Wikipedia text, output exactly 'REFUTED'.
-            3. If there is not enough context in the article to make a definitive judgment, output exactly 'INSUFFICIENT_DATA'.
-            Do not add any additional explanation or formatting.
-            """
+            prompt = (
+                f"You are a highly analytical Wikipedia Fact Checker on the GenLayer network.\n"
+                f"Your task is to analyze the following Wikipedia article text and determine if the user's factual claim is objectively supported by the article.\n\n"
+                f"[USER FACTUAL CLAIM]: {claim}\n"
+                f"[WIKIPEDIA ARTICLE EXTRACT]: {web_data}\n\n"
+                f"Rules:\n"
+                f"1. If the claim is explicitly supported by the Wikipedia text, output exactly 'VERIFIED'.\n"
+                f"2. If the claim is explicitly contradicted by the Wikipedia text, output exactly 'REFUTED'.\n"
+                f"3. If there is not enough context in the article to make a definitive judgment, output exactly 'INSUFFICIENT_DATA'.\n"
+                f"Do not add any additional explanation or formatting."
+            )
             consensus_result = gl.nondet.exec_prompt(prompt)
 
         # Step 2: Build a unique key to persist the decision to state storage
