@@ -35,7 +35,7 @@ export default function Home() {
       // 2. Poll for the result
       let consensusResult = 'NOT_YET_EVALUATED';
       let attempts = 0;
-      const maxAttempts = 120; // 3 minutes max (120 * 1500ms)
+      const maxAttempts = 400; // 10 minutes max (400 * 1500ms)
       while (consensusResult === 'NOT_YET_EVALUATED' && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 1500));
         consensusResult = await getVerificationStatus(cleanUrl, cleanClaim);

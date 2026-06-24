@@ -14,7 +14,7 @@ class VeriTrustAI(gl.Contract):
     verified_claims: TreeMap[str, str]
 
     def __init__(self):
-        pass
+        self.verified_claims = TreeMap()
 
     @gl.public.write
     def verify_web_claim(self, url: str, claim: str) -> str:
