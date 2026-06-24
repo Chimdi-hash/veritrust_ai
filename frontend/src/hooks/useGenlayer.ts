@@ -31,9 +31,9 @@ export function useGenlayer() {
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: chainIdHex }],
         });
-      } catch (switchError: any) {
+      } catch (switchError: unknown) {
         // This error code indicates that the chain has not been added to MetaMask.
-        if (switchError.code === 4902) {
+        if ((switchError as { code?: number }).code === 4902) {
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [
@@ -52,9 +52,9 @@ export function useGenlayer() {
       }
       
       setAddress(accounts[0]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Wallet connection error:', err);
-      setError(err.message || 'Failed to connect wallet.');
+      setError(err instanceof Error ? err.message : 'Failed to connect wallet.');
     } finally {
       setIsConnecting(false);
     }
@@ -86,8 +86,8 @@ export function useGenlayer() {
         value: 0n,
       });
       return transactionHash;
-    } catch (err: any) {
-      throw new Error(err.message || 'Transaction rejected or failed.');
+    } catch (err: unknown) {
+      throw new Error(err instanceof Error ? err.message : 'Transaction rejected or failed.');
     }
   };
 
@@ -104,8 +104,8 @@ export function useGenlayer() {
         args: [url, claim],
       });
       return result as string;
-    } catch (err: any) {
-      throw new Error(err.message || 'Failed to read from contract.');
+    } catch (err: unknown) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to read from contract.');
     }
   };
 

@@ -44,8 +44,8 @@ export default function Home() {
       }
       
       setStatus(consensusResult);
-    } catch (err: any) {
-      setError(`Transaction Error: ${err.message || 'Execution error.'}`);
+    } catch (err: unknown) {
+      setError(`Transaction Error: ${err instanceof Error ? err.message : 'Execution error.'}`);
       setStatus('ERROR');
     } finally {
       setIsVerifying(false);
@@ -217,7 +217,7 @@ export default function Home() {
                 </span>
               ) : status === 'AWAITING CONSENSUS...' ? (
                 <span style={{ letterSpacing: '0.1em' }}>
-                  /// SYNCHRONIZING ///
+                  {'/// SYNCHRONIZING ///'}
                 </span>
               ) : status === 'ERROR' ? (
                 status
