@@ -21,11 +21,6 @@ export default function Home() {
       return;
     }
     
-    if (!url.toLowerCase().includes('wikipedia.org')) {
-      setError('VeriTrust AI is currently restricted to Wikipedia articles. Please enter a valid Wikipedia URL.');
-      return;
-    }
-    
     setIsVerifying(true);
     setError(null);
     setStatus('AWAITING CONSENSUS...');
@@ -40,7 +35,7 @@ export default function Home() {
       // 2. Poll for the result
       let consensusResult = 'NOT_YET_EVALUATED';
       let attempts = 0;
-      const maxAttempts = 120; // 6 minutes max
+      const maxAttempts = 60; // 3 minutes max
       while (consensusResult === 'NOT_YET_EVALUATED' && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 3000));
         consensusResult = await getVerificationStatus(cleanUrl, cleanClaim);
@@ -130,9 +125,9 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <h1 className={styles.title}>Wikipedia Fact Checker</h1>
+          <h1 className={styles.title}>Decentralized Web Fact Checker</h1>
           <p className={styles.subtitle}>
-            Verify factual claims against Wikipedia articles using decentralized LLM consensus on the GenLayer testnet.
+            Verify factual claims against any open web article using decentralized LLM consensus on the GenLayer testnet.
           </p>
 
           <AnimatePresence>
@@ -158,7 +153,7 @@ export default function Home() {
                   type="url" 
                   id="urlInput" 
                   className={styles.input} 
-                  placeholder="e.g., https://en.wikipedia.org/wiki/Ethereum" 
+                  placeholder="e.g., https://example.com/article" 
                   style={{ paddingLeft: '3rem' }}
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
