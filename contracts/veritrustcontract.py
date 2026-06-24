@@ -25,7 +25,7 @@ class VeriTrustAI(gl.Contract):
             raw_web_data = gl.nondet.web.get(url, mode="text")
             web_data = raw_web_data[:12000] if raw_web_data else ""
         except Exception as e:
-            fallback = "INSUFFICIENT_DATA|Failed to fetch the webpage. It may be blocking scrapers."
+            fallback = f"INSUFFICIENT_DATA|Failed to fetch the webpage: {str(e)}"
             self.verified_claims[storage_key] = fallback
             return fallback
 
