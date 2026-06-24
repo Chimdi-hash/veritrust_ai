@@ -21,6 +21,11 @@ export default function Home() {
       return;
     }
     
+    if (!url.toLowerCase().includes('wikipedia.org')) {
+      setError('VeriTrust AI is currently restricted to Wikipedia articles. Please enter a valid Wikipedia URL.');
+      return;
+    }
+    
     setIsVerifying(true);
     setError(null);
     setStatus('AWAITING CONSENSUS...');
@@ -125,9 +130,9 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <h1 className={styles.title}>Web Consensus Oracle</h1>
+          <h1 className={styles.title}>Wikipedia Fact Checker</h1>
           <p className={styles.subtitle}>
-            Scrape real-world URL data and execute multi-validator LLM truth consensus on the Genlayer network.
+            Verify factual claims against Wikipedia articles using decentralized LLM consensus on the GenLayer testnet.
           </p>
 
           <AnimatePresence>
@@ -153,7 +158,7 @@ export default function Home() {
                   type="url" 
                   id="urlInput" 
                   className={styles.input} 
-                  placeholder="https://example.com/article" 
+                  placeholder="e.g., https://en.wikipedia.org/wiki/Ethereum" 
                   style={{ paddingLeft: '3rem' }}
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
@@ -170,7 +175,7 @@ export default function Home() {
                   type="text" 
                   id="claimInput" 
                   className={styles.input} 
-                  placeholder="Enter specific data claim to verify..." 
+                  placeholder="e.g., Ethereum transitioned to Proof-of-Stake in 2022." 
                   style={{ paddingLeft: '3rem' }}
                   value={claim}
                   onChange={(e) => setClaim(e.target.value)}
