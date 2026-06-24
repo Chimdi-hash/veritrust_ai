@@ -111,7 +111,6 @@ export function useGenlayer() {
         address: CONTRACT_ADDRESS as `0x${string}`,
         functionName: 'get_verification_status',
         args: [url, claim],
-        blockTag: 'pending',
       });
       return result as string;
     } catch (err: unknown) {
