@@ -13,6 +13,9 @@ class VeriTrustAI(gl.Contract):
     # Persistent storage using GenLayer's strict TreeMap structure
     verified_claims: TreeMap[str, str]
 
+    def __init__(self):
+        self.verified_claims = TreeMap()
+
     @gl.public.write
     def verify_web_claim(self, url: str, claim: str) -> str:
         storage_key = f"{url}::{claim}"
