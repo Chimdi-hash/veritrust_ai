@@ -43,7 +43,7 @@ export default function Home() {
       }
       
       if (consensusResult === 'NOT_YET_EVALUATED') {
-        throw new Error('Verification timed out. GenLayer testnet is taking too long to propagate state.');
+        throw new Error('Verification timed out! The URL might be blocking the GenLayer scraper, or consensus failed silently. Please try a different URL or Claim.');
       }
       
       setStatus(consensusResult);
