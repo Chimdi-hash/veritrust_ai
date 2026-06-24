@@ -32,10 +32,9 @@ class VeriTrustAI(gl.Contract):
                 f"Analyze this webpage data closely:\n\n"
                 f"--- CONTENT START ---\n{web_data}\n--- CONTENT END ---\n\n"
                 f"User Claim: '{claim}'\n\n"
-                f"Does the content support the claim? Respond with exactly one option:\n"
-                f"- 'VERIFIED'\n"
-                f"- 'REFUTED'\n"
-                f"- 'INSUFFICIENT_DATA'"
+                f"Does the content support the claim? Respond in this exact format:\n"
+                f"<VERDICT>|<SHORT_REMARK>\n"
+                f"Where <VERDICT> is either 'VERIFIED', 'REFUTED', or 'INSUFFICIENT_DATA', and <SHORT_REMARK> is a 1-2 sentence explanation."
             )
 
             # Gather decentralized LLM consensus

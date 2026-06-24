@@ -35,9 +35,9 @@ export default function Home() {
       // 2. Poll for the result
       let consensusResult = 'NOT_YET_EVALUATED';
       let attempts = 0;
-      const maxAttempts = 60; // 3 minutes max
+      const maxAttempts = 120; // 3 minutes max (120 * 1500ms)
       while (consensusResult === 'NOT_YET_EVALUATED' && attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         consensusResult = await getVerificationStatus(cleanUrl, cleanClaim);
         attempts++;
       }
@@ -55,9 +55,12 @@ export default function Home() {
     }
   };
 
+  const [verdict, ...remarkParts] = status.split('|');
+  const remark = remarkParts.join('|');
+
   const getStatusColor = () => {
-    if (status === 'VERIFIED') return 'var(--accent)';
-    if (status === 'REFUTED') return 'var(--danger)';
+    if (verdict === 'VERIFIED') return 'var(--accent)';
+    if (verdict === 'REFUTED') return 'var(--danger)';
     if (status === 'ERROR') return 'var(--warning)';
     if (status === 'AWAITING CONSENSUS...') return 'var(--primary)';
     return 'white';
@@ -127,7 +130,7 @@ export default function Home() {
         >
           <h1 className={styles.title}>Decentralized Web Fact Checker</h1>
           <p className={styles.subtitle}>
-            Verify factual claims against any open web article using decentralized LLM consensus on the GenLayer testnet.
+            Verify factual claims against any open web article using decentralized LLM consensus on the GenLayer Studio network.
           </p>
 
           <AnimatePresence>
@@ -226,8 +229,15 @@ export default function Home() {
                 status
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '0.7em', opacity: 0.8, letterSpacing: '0.1em' }}>VALIDATOR REMARK:</span>
-                  <span>{status}</span>
+                  <span style={{ fontSize: '1.2em', fontWeight: 'bold' }}>{verdict}</span>
+                  {remark ? (
+                    <>
+                      <span style={{ fontSize: '0.7em', opacity: 0.8, letterSpacing: '0.1em', marginTop: '0.5rem' }}>VALIDATOR REMARK:</span>
+                      <span style={{ fontSize: '0.9em', textAlign: 'center', maxWidth: '80%' }}>{remark}</span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: '0.9em', textAlign: 'center' }}>No extended remark provided.</span>
+                  )}
                 </div>
               )}
             </motion.div>

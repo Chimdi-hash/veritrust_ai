@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { createClient } from 'genlayer-js';
-import { testnetBradbury } from 'genlayer-js/chains';
+import { studionet } from 'genlayer-js/chains';
 
 // Replace this with the actual Genlayer contract address
-export const CONTRACT_ADDRESS = '0x89F9aCb23ba23627F93C61c24a8eE0d4618c4f09';
-// We use the testnetBradbury chain from genlayer-js as requested
+export const CONTRACT_ADDRESS = '0x10832a504F0f6ecb255dC2A47cd37dc6A2cebFAf';
+// We use the studionet chain from genlayer-js as requested
 
 export function useGenlayer() {
   const [address, setAddress] = useState<string | null>(null);
@@ -24,8 +24,8 @@ export function useGenlayer() {
         throw new Error('Connection rejected by user.');
       }
       
-      // Attempt to switch to Bradbury testnet
-      const chainIdHex = `0x${testnetBradbury.id.toString(16)}`;
+      // Attempt to switch to Studio network
+      const chainIdHex = `0x${studionet.id.toString(16)}`;
       try {
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
@@ -39,10 +39,10 @@ export function useGenlayer() {
             params: [
               {
                 chainId: chainIdHex,
-                chainName: testnetBradbury.name,
-                rpcUrls: [...testnetBradbury.rpcUrls.default.http],
-                nativeCurrency: testnetBradbury.nativeCurrency,
-                blockExplorerUrls: testnetBradbury.blockExplorers ? [testnetBradbury.blockExplorers.default.url] : [],
+                chainName: studionet.name,
+                rpcUrls: [...studionet.rpcUrls.default.http],
+                nativeCurrency: studionet.nativeCurrency,
+                blockExplorerUrls: studionet.blockExplorers ? [studionet.blockExplorers.default.url] : [],
               },
             ],
           });
@@ -72,7 +72,7 @@ export function useGenlayer() {
 
     // Create the write client with window.ethereum to trigger the MetaMask popup
     const writeClient = createClient({
-      chain: testnetBradbury,
+      chain: studionet,
       account: address as `0x${string}`,
       provider: window.ethereum,
     });
@@ -103,7 +103,7 @@ export function useGenlayer() {
   const getVerificationStatus = async (url: string, claim: string): Promise<string> => {
     // Read client doesn't strictly need the provider for signing
     const readClient = createClient({
-      chain: testnetBradbury,
+      chain: studionet,
     });
 
     try {
