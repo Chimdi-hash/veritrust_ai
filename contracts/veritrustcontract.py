@@ -7,55 +7,47 @@ from genlayer import *
 class VeriTrustAI(gl.Contract):
     """
     VeriTrust AI: A decentralized web content verification oracle
-    using multi-validator LLM consensus blocks.
+    using strict LLM consensus blocks.
     """
 
     # Persistent storage using GenLayer's strict TreeMap structure
     verified_claims: TreeMap[str, str]
 
-    def __init__(self):
-        self.verified_claims = TreeMap()
-
     @gl.public.write
     def verify_web_claim(self, url: str, claim: str) -> str:
-        """
-        Fetches web content and uses an LLM consensus block to verify a user's claim.
-        """
-        # Step 1: Execute non-deterministic tasks inside GenLayer's equivalence principle block
-        consensus_result = gl.eq_principle.prompt_comparative(
-            self._fetch_and_verify,
-            url,
-            claim,
-            principle="The <VERDICT> part of the response (before the pipe |) must match exactly. The <SHORT_REMARK> part (after the pipe |) must share the same factual meaning, even if worded differently."
-        )
-
-        # Step 2: Build a unique key to persist the decision to state storage
         storage_key = f"{url}::{claim}"
-        self.verified_claims[storage_key] = consensus_result
-
-        return consensus_result
-
-    def _fetch_and_verify(self, url: str, claim: str) -> str:
-        # Safely scrape text content from the target web address and truncate to prevent LLM context limits
+        
+        # 1. Fetch web data
         try:
             raw_web_data = gl.nondet.web.get(url, mode="text")
             web_data = raw_web_data[:12000] if raw_web_data else ""
         except Exception as e:
-            return "INSUFFICIENT_DATA|Failed to fetch the webpage. It may be blocking scrapers."
+            fallback = "INSUFFICIENT_DATA|Failed to fetch the webpage. It may be blocking scrapers."
+            self.verified_claims[storage_key] = fallback
+            return fallback
 
-        # Craft the structured verification instructions for the validator nodes
+        # 2. Strict single-word prompt for deterministic LLM output across validators
         prompt = (
-            f"Analyze this webpage data closely:\n\n"
-            f"--- CONTENT START ---\n{web_data}\n--- CONTENT END ---\n\n"
-            f"User Claim: '{claim}'\n\n"
-            f"Does the content support the claim? Respond in this exact format:\n"
-            f"<VERDICT>|<SHORT_REMARK>\n"
-            f"Where <VERDICT> is 'VERIFIED', 'REFUTED', or 'INSUFFICIENT_DATA'.\n"
-            f"For <SHORT_REMARK>, provide a direct quote (max 1 sentence) from the text that justifies the verdict. If INSUFFICIENT_DATA, write 'No relevant information found.'"
+            f"Analyze this webpage data:\n\n"
+            f"--- CONTENT ---\n{web_data}\n--- END ---\n\n"
+            f"Claim: '{claim}'\n\n"
+            f"Respond with EXACTLY ONE WORD. Is the claim supported? Output 'VERIFIED', 'REFUTED', or 'INSUFFICIENT_DATA'."
         )
 
-        # Gather decentralized LLM consensus
-        return gl.nondet.exec_prompt(prompt)
+        # 3. Gather decentralized LLM output
+        llm_output = gl.nondet.exec_prompt(prompt).strip().upper()
+
+        # 4. Normalize to strictly matching strings so consensus never fails silently
+        if "VERIFIED" in llm_output:
+            final_verdict = "VERIFIED|The claim is supported by the webpage content."
+        elif "REFUTED" in llm_output:
+            final_verdict = "REFUTED|The claim is contradicted by the webpage content."
+        else:
+            final_verdict = "INSUFFICIENT_DATA|Could not conclusively verify or refute the claim."
+
+        # 5. Persist to state
+        self.verified_claims[storage_key] = final_verdict
+        return final_verdict
 
     @gl.public.view
     def get_verification_status(self, url: str, claim: str) -> str:
