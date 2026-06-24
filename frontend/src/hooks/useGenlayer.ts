@@ -78,11 +78,24 @@ export function useGenlayer() {
     });
 
     try {
+      // Fetch web data first using our new server-side scraper API
+      const res = await fetch('/api/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(`Failed to scrape webpage: ${data.error}`);
+      }
+      const webData = data.text;
+
       // This will trigger the MetaMask popup for the user to confirm the transaction and pay GEN token gas
       const transactionHash = await writeClient.writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
         functionName: 'verify_web_claim',
-        args: [url, claim],
+        args: [url, claim, webData],
         value: 0n,
       });
       

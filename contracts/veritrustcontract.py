@@ -17,19 +17,16 @@ class VeriTrustAI(gl.Contract):
         self.verified_claims = TreeMap()
 
     @gl.public.write
-    def verify_web_claim(self, url: str, claim: str) -> str:
+    def verify_web_claim(self, url: str, claim: str, web_data: str) -> str:
         storage_key = f"{url}::{claim}"
         
-        # 1. Fetch web data
-        try:
-            raw_web_data = gl.nondet.web.get(url)
-            web_data = raw_web_data[:12000] if raw_web_data else ""
-        except Exception as e:
-            fallback = f"INSUFFICIENT_DATA|Failed to fetch the webpage: {str(e)}"
+        # Ensure we have data to analyze
+        if not web_data or len(web_data.strip()) == 0:
+            fallback = "INSUFFICIENT_DATA|Failed to fetch the webpage content."
             self.verified_claims[storage_key] = fallback
             return fallback
 
-        # 2. Strict single-word prompt for deterministic LLM output across validators
+        # 1. Strict single-word prompt for deterministic LLM output across validators
         prompt = (
             f"Analyze this webpage data:\n\n"
             f"--- CONTENT ---\n{web_data}\n--- END ---\n\n"
