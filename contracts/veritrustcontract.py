@@ -32,9 +32,9 @@ class VeriTrustAI(gl.Contract):
         try:
             consensus_result = gl.eq_principle.prompt_comparative(
                 self._run_llm,
+                "The verdicts must match exactly (VERIFIED, REFUTED, or INSUFFICIENT_DATA).",
                 claim,
-                safe_web_data,
-                principle="The verdicts must match exactly (VERIFIED, REFUTED, or INSUFFICIENT_DATA)."
+                safe_web_data
             )
         except Exception as e:
             consensus_result = f"ERROR|Consensus Execution Exception: {str(e)}"
