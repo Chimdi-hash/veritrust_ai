@@ -27,6 +27,10 @@ class VeriTrustAI(gl.Contract):
             # Safely scrape text content from the target web address
             web_data = gl.nondet.web.get(url, mode="text")
             
+            # Truncate the text to strictly prevent exceeding the LLM context window (which causes silent node failures)
+            if len(web_data) > 10000:
+                web_data = web_data[:10000] + "... [TRUNCATED]"
+            
             # Craft the structured verification instructions tailored for Wikipedia
             prompt = (
                 f"You are a highly analytical Wikipedia Fact Checker on the GenLayer network.\n"
