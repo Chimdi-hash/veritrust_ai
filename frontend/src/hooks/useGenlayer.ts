@@ -96,7 +96,11 @@ export function useGenlayer() {
 
       return transactionHash;
     } catch (err: unknown) {
-      throw new Error(err instanceof Error ? err.message : 'Transaction rejected or failed.');
+      const msg = err instanceof Error ? err.message : 'Transaction rejected or failed.';
+      if (msg.includes('Server busy')) {
+        throw new Error('The GenLayer Studio network is currently congested (all execution slots are occupied). Please wait a few moments and try again.');
+      }
+      throw new Error(msg);
     }
   };
 
@@ -114,7 +118,12 @@ export function useGenlayer() {
       });
       return result as string;
     } catch (err: unknown) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to read from contract.');
+      const msg = err instanceof Error ? err.message : 'Failed to read from contract.';
+      if (msg.includes('Server busy')) {
+        // Just return 'NOT_YET_EVALUATED' to keep polling instead of throwing an error during polling
+        return 'NOT_YET_EVALUATED';
+      }
+      throw new Error(msg);
     }
   };
 
