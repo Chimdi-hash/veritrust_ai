@@ -26,7 +26,8 @@ class VeriTrustAI(gl.Contract):
         consensus_result = gl.eq_principle.prompt_comparative(
             self._fetch_and_verify,
             url,
-            claim
+            claim,
+            principle="The <VERDICT> part of the response (before the pipe |) must match exactly. The <SHORT_REMARK> part (after the pipe |) must share the same factual meaning, even if worded differently."
         )
 
         # Step 2: Build a unique key to persist the decision to state storage
@@ -37,8 +38,11 @@ class VeriTrustAI(gl.Contract):
 
     def _fetch_and_verify(self, url: str, claim: str) -> str:
         # Safely scrape text content from the target web address and truncate to prevent LLM context limits
-        raw_web_data = gl.nondet.web.get(url, mode="text")
-        web_data = raw_web_data[:12000] if raw_web_data else ""
+        try:
+            raw_web_data = gl.nondet.web.get(url, mode="text")
+            web_data = raw_web_data[:12000] if raw_web_data else ""
+        except Exception as e:
+            return "INSUFFICIENT_DATA|Failed to fetch the webpage. It may be blocking scrapers."
 
         # Craft the structured verification instructions for the validator nodes
         prompt = (
