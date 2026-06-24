@@ -22,7 +22,7 @@ class VeriTrustAI(gl.Contract):
         
         # 1. Fetch web data
         try:
-            raw_web_data = gl.nondet.web.get(url, mode="text")
+            raw_web_data = gl.nondet.web.get(url)
             web_data = raw_web_data[:12000] if raw_web_data else ""
         except Exception as e:
             fallback = f"INSUFFICIENT_DATA|Failed to fetch the webpage: {str(e)}"
