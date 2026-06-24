@@ -3,7 +3,7 @@ import { createClient } from 'genlayer-js';
 import { testnetBradbury } from 'genlayer-js/chains';
 
 // Replace this with the actual Genlayer contract address
-export const CONTRACT_ADDRESS = '0x0bd8266DfcBE01852f9BB509D65266a6E5A1130d';
+export const CONTRACT_ADDRESS = '0x89F9aCb23ba23627F93C61c24a8eE0d4618c4f09';
 // We use the testnetBradbury chain from genlayer-js as requested
 
 export function useGenlayer() {
