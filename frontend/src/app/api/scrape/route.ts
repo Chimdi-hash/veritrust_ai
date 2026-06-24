@@ -24,8 +24,8 @@ export async function POST(req: Request) {
                      .replace(/\s+/g, ' ')
                      .trim();
     
-    // Return up to 12000 characters to stay within LLM context limits
-    return NextResponse.json({ text: text.substring(0, 12000) });
+    // Return up to 3000 characters to ensure it easily fits within gas limits and LLM context limits
+    return NextResponse.json({ text: text.substring(0, 3000) });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }

@@ -27,15 +27,21 @@ class VeriTrustAI(gl.Contract):
             return fallback
 
         # 1. Strict single-word prompt for deterministic LLM output across validators
+        safe_web_data = web_data[:3000]
         prompt = (
             f"Analyze this webpage data:\n\n"
-            f"--- CONTENT ---\n{web_data}\n--- END ---\n\n"
+            f"--- CONTENT ---\n{safe_web_data}\n--- END ---\n\n"
             f"Claim: '{claim}'\n\n"
             f"Respond with EXACTLY ONE WORD. Is the claim supported? Output 'VERIFIED', 'REFUTED', or 'INSUFFICIENT_DATA'."
         )
 
-        # 3. Gather decentralized LLM output
-        llm_output = gl.nondet.exec_prompt(prompt).strip().upper()
+        # 3. Gather decentralized LLM output safely
+        try:
+            llm_output = gl.nondet.exec_prompt(prompt).strip().upper()
+        except Exception as e:
+            fallback = f"ERROR|LLM Execution Exception: {str(e)}"
+            self.verified_claims[storage_key] = fallback
+            return fallback
 
         # 4. Normalize to strictly matching strings so consensus never fails silently
         if "VERIFIED" in llm_output:
