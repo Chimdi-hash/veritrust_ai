@@ -83,7 +83,7 @@ export function useGenlayer() {
         address: CONTRACT_ADDRESS as `0x${string}`,
         functionName: 'verify_web_claim',
         args: [url, claim],
-        value: BigInt(0),
+        value: 0n,
       });
       return transactionHash;
     } catch (err: any) {
