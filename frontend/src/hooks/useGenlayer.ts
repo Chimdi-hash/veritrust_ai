@@ -85,6 +85,15 @@ export function useGenlayer() {
         args: [url, claim],
         value: 0n,
       });
+      
+      const receipt = await writeClient.waitForTransactionReceipt({ 
+        hash: transactionHash
+      });
+      
+      if (receipt.status === 'reverted') {
+        throw new Error('Transaction reverted by the network (e.g., invalid URL, timeout, or consensus failure).');
+      }
+
       return transactionHash;
     } catch (err: unknown) {
       throw new Error(err instanceof Error ? err.message : 'Transaction rejected or failed.');
