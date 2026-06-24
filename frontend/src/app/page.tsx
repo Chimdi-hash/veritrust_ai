@@ -30,9 +30,19 @@ export default function Home() {
       await verifyWebClaim(url, claim);
       
       // 2. Poll for the result after giving Studionet a brief moment to process the state change block
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      let consensusResult = 'NOT_YET_EVALUATED';
+      let attempts = 0;
+      const maxAttempts = 30; // 90 seconds max
+      while (consensusResult === 'NOT_YET_EVALUATED' && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        consensusResult = await getVerificationStatus(url, claim);
+        attempts++;
+      }
       
-      const consensusResult = await getVerificationStatus(url, claim);
+      if (consensusResult === 'NOT_YET_EVALUATED') {
+        throw new Error('Verification timed out. Network is taking too long.');
+      }
+      
       setStatus(consensusResult);
     } catch (err: any) {
       setError(`Transaction Error: ${err.message || 'Execution error.'}`);
@@ -209,8 +219,13 @@ export default function Home() {
                 <span style={{ letterSpacing: '0.1em' }}>
                   /// SYNCHRONIZING ///
                 </span>
-              ) : (
+              ) : status === 'ERROR' ? (
                 status
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.7em', opacity: 0.8, letterSpacing: '0.1em' }}>VALIDATOR REMARK:</span>
+                  <span>{status}</span>
+                </div>
               )}
             </motion.div>
           </motion.div>
