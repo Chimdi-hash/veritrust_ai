@@ -99,12 +99,23 @@ export function useGenlayer() {
         value: 0n,
       });
       
-      const receipt = await writeClient.waitForTransactionReceipt({ 
-        hash: transactionHash
-      });
-      
-      if (String(receipt.status) === 'reverted' || String(receipt.status) === '0') {
-        throw new Error('Transaction reverted by the network (e.g., invalid URL, timeout, or consensus failure).');
+      try {
+        const receipt = await writeClient.waitForTransactionReceipt({ 
+          hash: transactionHash
+        });
+        
+        if (String(receipt.status) === 'reverted' || String(receipt.status) === '0') {
+          throw new Error('Transaction reverted by the network (e.g., invalid URL, timeout, or consensus failure).');
+        }
+      } catch (receiptErr: unknown) {
+        const msg = receiptErr instanceof Error ? receiptErr.message : String(receiptErr);
+        if (msg.includes('Timed out waiting for transaction') || msg.includes('timeout')) {
+          console.warn('Receipt timeout caught, falling back to manual state polling...', msg);
+          // We ignore the timeout because the transaction is still pending on the GenLayer testnet.
+          // The UI will gracefully fallback to polling get_verification_status for up to 10 minutes.
+        } else {
+          throw receiptErr;
+        }
       }
 
       return transactionHash;
