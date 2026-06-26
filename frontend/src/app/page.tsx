@@ -222,9 +222,13 @@ export default function Home() {
                   [ SYSTEM_STANDBY ]
                 </span>
               ) : status === 'AWAITING CONSENSUS...' ? (
-                <span style={{ letterSpacing: '0.1em' }}>
+                <motion.span 
+                  style={{ letterSpacing: '0.1em', display: 'inline-block' }}
+                  animate={{ opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                >
                   {'/// SYNCHRONIZING ///'}
-                </span>
+                </motion.span>
               ) : status === 'ERROR' ? (
                 status
               ) : (
