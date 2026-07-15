@@ -84,7 +84,6 @@ export function useGenlayer() {
         functionName: 'verify_web_claim',
         args: [url, claim],
         value: 0n,
-        gas: 10000000n, // Bypass eth_estimateGas to prevent RPC timeouts during long LLM/scrape simulations
       });
       
       try {
