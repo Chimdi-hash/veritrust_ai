@@ -17,19 +17,22 @@ class VeriTrustAI(gl.Contract):
         self.verified_claims = TreeMap()
 
     @gl.public.write
-    def verify_web_claim(self, url: str, claim: str, web_data: str) -> str:
+    def verify_web_claim(self, url: str, claim: str) -> str:
         storage_key = f"{url}::{claim}"
-        
-        # Ensure we have data to analyze
-        if not web_data or len(web_data.strip()) == 0:
-            fallback = "INSUFFICIENT_DATA|Failed to fetch the webpage content."
-            self.verified_claims[storage_key] = fallback
-            return fallback
-
-        safe_web_data = web_data[:3000]
         
         # Define a zero-argument callable that captures our arguments from the outer scope
         def run_llm() -> str:
+            try:
+                # Fetching happens securely on the validator nodes, inside the consensus block!
+                # We cast to string just in case the SDK returns a wrapper object
+                web_data = str(gl.nondet.web.get(url))
+                safe_web_data = web_data[:3000]
+                
+                if not safe_web_data or len(safe_web_data.strip()) == 0:
+                    return "INSUFFICIENT_DATA|Failed to fetch the webpage content."
+            except Exception as e:
+                return f"INSUFFICIENT_DATA|Failed to fetch the webpage content: {str(e)}"
+                
             prompt = (
                 f"Analyze this webpage data:\n\n"
                 f"--- CONTENT ---\n{safe_web_data}\n--- END ---\n\n"
@@ -55,8 +58,15 @@ class VeriTrustAI(gl.Contract):
         except Exception as e:
             consensus_result = f"ERROR|Consensus Execution Exception: {str(e)}"
             
-        self.verified_claims[storage_key] = consensus_result
-        return consensus_result
+        # Provenance: Bind the sender address to the result
+        try:
+            sender = str(gl.message.sender_address)
+        except Exception:
+            sender = "UNKNOWN_SENDER"
+            
+        final_result = f"{consensus_result}|{sender}"
+        self.verified_claims[storage_key] = final_result
+        return final_result
 
     @gl.public.view
     def get_verification_status(self, url: str, claim: str) -> str:

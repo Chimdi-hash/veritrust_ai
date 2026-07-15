@@ -55,8 +55,9 @@ export default function Home() {
     }
   };
 
-  const [verdict, ...remarkParts] = status.split('|');
-  const remark = remarkParts.join('|').trim();
+  const [verdict, remarkPart, senderPart, ...rest] = status.split('|');
+  const remark = remarkPart ? remarkPart.trim() : '';
+  const sender = senderPart ? senderPart.trim() : '';
 
   const getStatusColor = () => {
     if (verdict === 'VERIFIED') return 'var(--accent)';
@@ -241,6 +242,12 @@ export default function Home() {
                     </>
                   ) : (
                     <span style={{ fontSize: '0.9em', textAlign: 'center' }}>No extended remark provided.</span>
+                  )}
+                  {sender && (
+                    <div style={{ marginTop: '1rem', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '0.75em' }}>
+                      <span style={{ opacity: 0.7 }}>PROVENANCE: Submitted by </span>
+                      <span style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{sender}</span>
+                    </div>
                   )}
                 </div>
               )}
