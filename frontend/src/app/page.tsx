@@ -244,7 +244,7 @@ export default function Home() {
                     <span style={{ fontSize: '0.9em', textAlign: 'center' }}>No extended remark provided.</span>
                   )}
                   {sender && (
-                    <div style={{ marginTop: '1rem', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '0.75em' }}>
+                    <div style={{ marginTop: '1rem', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '0.75em', width: '100%', wordBreak: 'break-all' }}>
                       <span style={{ opacity: 0.7 }}>PROVENANCE: Submitted by </span>
                       <span style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{sender}</span>
                     </div>

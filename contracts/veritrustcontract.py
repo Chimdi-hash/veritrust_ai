@@ -24,9 +24,11 @@ class VeriTrustAI(gl.Contract):
         def run_llm() -> str:
             try:
                 # Fetching happens securely on the validator nodes, inside the consensus block!
-                # We cast to string just in case the SDK returns a wrapper object
-                web_data = str(gl.nondet.web.get(url))
-                safe_web_data = web_data[:3000]
+                # We route through a public markdown extractor (Jina) to strip HTML bloat,
+                # ensuring the LLM reads actual article text and not just HTML <head> metadata.
+                jina_url = "https://r.jina.ai/" + url
+                web_data = str(gl.nondet.web.get(jina_url))
+                safe_web_data = web_data[:10000] # Increase limit to 10k chars of pure markdown
                 
                 if not safe_web_data or len(safe_web_data.strip()) == 0:
                     return "INSUFFICIENT_DATA|Failed to fetch the webpage content."
