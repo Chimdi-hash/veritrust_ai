@@ -55,15 +55,34 @@ export default function Home() {
     }
   };
 
-  const [verdict, remarkPart, senderPart, ...rest] = status.split('|');
-  const remark = remarkPart ? remarkPart.trim() : '';
-  const sender = senderPart ? senderPart.trim() : '';
+  let history: Array<{ verdict: string, remark: string, sender: string }> = [];
+  let verdict = '';
+  let remark = '';
+  let sender = '';
+  
+  if (status !== 'NOT_YET_EVALUATED' && status !== 'AWAITING CONSENSUS...' && status !== 'ERROR') {
+    try {
+        history = JSON.parse(status);
+        if (history.length > 0) {
+            const latest = history[history.length - 1];
+            verdict = latest.verdict;
+            remark = latest.remark;
+            sender = latest.sender;
+        }
+    } catch (e) {
+        // Fallback for old string format
+        const parts = status.split('|');
+        verdict = parts[0];
+        remark = parts[1] || '';
+        sender = parts[2] || '';
+    }
+  }
 
-  const getStatusColor = () => {
-    if (verdict === 'VERIFIED') return 'var(--accent)';
-    if (verdict === 'REFUTED') return 'var(--danger)';
-    if (status === 'ERROR') return 'var(--warning)';
-    if (status === 'AWAITING CONSENSUS...') return 'var(--primary)';
+  const getStatusColor = (v: string) => {
+    if (v === 'VERIFIED') return 'var(--accent)';
+    if (v === 'REFUTED') return 'var(--danger)';
+    if (v === 'ERROR') return 'var(--warning)';
+    if (v === 'AWAITING CONSENSUS...') return 'var(--primary)';
     return 'white';
   };
 
@@ -209,10 +228,10 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            <div className={styles.resultTitle}>Consensus Resolution Status</div>
+            <div className={styles.resultTitle}>Latest Consensus Resolution</div>
             <motion.div 
               className={styles.statusCard}
-              style={{ color: getStatusColor() }}
+              style={{ color: getStatusColor(status === 'ERROR' ? status : verdict) }}
               key={status}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -252,6 +271,27 @@ export default function Home() {
                 </div>
               )}
             </motion.div>
+            
+            {history.length > 1 && (
+              <div style={{ marginTop: '2rem', textAlign: 'left' }}>
+                <div style={{ fontSize: '0.8em', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+                  Submission History ({history.length} total)
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {[...history].reverse().slice(1).map((record, index) => (
+                    <div key={index} style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', borderLeft: `3px solid ${getStatusColor(record.verdict)}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '0.85em', color: getStatusColor(record.verdict) }}>{record.verdict}</span>
+                        <span style={{ fontSize: '0.7em', opacity: 0.5, fontFamily: 'monospace' }}>Evaluated in the past</span>
+                      </div>
+                      <div style={{ fontSize: '0.8em', opacity: 0.9, marginBottom: '0.5rem' }}>{record.remark}</div>
+                      <div style={{ fontSize: '0.7em', opacity: 0.6, wordBreak: 'break-all' }}>Submitted by: {record.sender}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
           </motion.div>
         </motion.div>
       </main>

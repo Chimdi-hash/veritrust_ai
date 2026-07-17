@@ -1,6 +1,7 @@
 # v0.2.17
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
+import json
 from genlayer import *
 
 
@@ -66,9 +67,24 @@ class VeriTrustAI(gl.Contract):
         except Exception:
             sender = "UNKNOWN_SENDER"
             
-        final_result = f"{consensus_result}|{sender}"
-        self.verified_claims[storage_key] = final_result
-        return final_result
+        # Preserve Submission History: fetch existing records, append, and save
+        history_str = self.verified_claims.get(storage_key, "[]")
+        try:
+            history = json.loads(history_str)
+        except Exception:
+            history = []
+            
+        new_record = {
+            "verdict": consensus_result.split("|")[0] if "|" in consensus_result else consensus_result,
+            "remark": consensus_result.split("|", 1)[1] if "|" in consensus_result else "",
+            "sender": sender
+        }
+        
+        history.append(new_record)
+        final_result_json = json.dumps(history)
+        
+        self.verified_claims[storage_key] = final_result_json
+        return final_result_json
 
     @gl.public.view
     def get_verification_status(self, url: str, claim: str) -> str:
