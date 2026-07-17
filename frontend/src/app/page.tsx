@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet, ShieldCheck, AlertCircle, Loader2, Link as LinkIcon, FileText } from 'lucide-react';
 import { useGenlayer } from '@/hooks/useGenlayer';
@@ -13,6 +13,30 @@ export default function Home() {
   const [claim, setClaim] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [status, setStatus] = useState<string>('NOT_YET_EVALUATED');
+  
+  const [personalHistory, setPersonalHistory] = useState<Array<{url: string, claim: string, verdict: string, date: string}>>([]);
+
+  useEffect(() => {
+    if (address) {
+      const stored = localStorage.getItem(`veritrust_history_${address}`);
+      if (stored) {
+        try { setPersonalHistory(JSON.parse(stored)); } catch(e) {}
+      } else {
+        setPersonalHistory([]);
+      }
+    } else {
+      setPersonalHistory([]);
+    }
+  }, [address]);
+
+  const saveToPersonalHistory = (record: {url: string, claim: string, verdict: string, date: string}) => {
+    if (!address) return;
+    const current = localStorage.getItem(`veritrust_history_${address}`);
+    let hist = current ? JSON.parse(current) : [];
+    hist = [record, ...hist];
+    localStorage.setItem(`veritrust_history_${address}`, JSON.stringify(hist));
+    setPersonalHistory(hist);
+  };
   
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +71,16 @@ export default function Home() {
       }
       
       setStatus(consensusResult);
+      
+      let finalVerdict = '';
+      try {
+         const parsed = JSON.parse(consensusResult);
+         if (parsed.length > 0) finalVerdict = parsed[parsed.length - 1].verdict;
+      } catch(e) {
+         finalVerdict = consensusResult.split('|')[0];
+      }
+      saveToPersonalHistory({ url: cleanUrl, claim: cleanClaim, verdict: finalVerdict, date: new Date().toLocaleString() });
+      
     } catch (err: unknown) {
       setError(`Transaction Error: ${err instanceof Error ? err.message : 'Execution error.'}`);
       setStatus('ERROR');
@@ -294,6 +328,34 @@ export default function Home() {
             
           </motion.div>
         </motion.div>
+
+        {address && personalHistory.length > 0 && (
+          <motion.div 
+            className={styles.card}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            style={{ marginTop: '2rem' }}
+          >
+            <div style={{ fontSize: '1.2em', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Wallet size={20} color="var(--primary)" />
+              Your Local Verification History
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
+              {personalHistory.map((item, i) => (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', borderLeft: `4px solid ${getStatusColor(item.verdict)}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                    <span style={{ fontWeight: 'bold', color: getStatusColor(item.verdict) }}>{item.verdict}</span>
+                    <span style={{ fontSize: '0.7em', opacity: 0.5 }}>{item.date}</span>
+                  </div>
+                  <div style={{ fontSize: '0.85em', opacity: 0.9, marginBottom: '0.25rem' }}><strong>Claim:</strong> {item.claim}</div>
+                  <div style={{ fontSize: '0.75em', opacity: 0.6, wordBreak: 'break-all', display: 'flex', gap: '0.5rem' }}><LinkIcon size={12}/> <a href={item.url} target="_blank" rel="noreferrer" style={{color: 'var(--primary)', textDecoration: 'none'}}>{item.url}</a></div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
       </main>
     </div>
   );
