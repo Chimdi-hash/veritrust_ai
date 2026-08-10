@@ -7,7 +7,7 @@ import { useGenlayer } from '@/hooks/useGenlayer';
 import styles from './page.module.css';
 
 export default function Home() {
-  const { address, isConnecting, error, setError, connectWallet, disconnectWallet, faucet, getBalance, createMarket, getAllMarkets, bet, resolveMarket } = useGenlayer();
+  const { address, isConnecting, error, setError, connectWallet, disconnectWallet, getBalance, createMarket, getAllMarkets, bet, resolveMarket } = useGenlayer();
   
   const [balance, setBalance] = useState<number>(0);
   const [markets, setMarkets] = useState<any[]>([]);
@@ -32,20 +32,6 @@ export default function Home() {
     const interval = setInterval(loadData, 5000);
     return () => clearInterval(interval);
   }, [address]);
-
-  const handleFaucet = async () => {
-    setIsProcessing(true);
-    setLoadingMsg('Minting 1000 GEN tokens...');
-    setError(null);
-    try {
-      await faucet();
-      await loadData();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const handleCreateMarket = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,9 +120,9 @@ export default function Home() {
                 className={styles.addressContainer}
                 style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}
               >
-                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center' }} title="Native GEN Balance">
                   <Coins size={16} color="var(--accent)" />
-                  {balance} GEN
+                  {balance.toFixed(4)} GEN
                 </div>
                 <div className={styles.addressBadge}>
                   {address.substring(0, 6)}...{address.substring(address.length - 4)}
@@ -172,19 +158,9 @@ export default function Home() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
             <h1 className={styles.title} style={{ margin: 0 }}>Prediction Markets</h1>
-            {address && (
-              <button 
-                onClick={handleFaucet} 
-                className={styles.btnConnect} 
-                style={{ padding: '0.5rem 1rem', background: 'var(--primary)', color: 'black' }}
-                disabled={isProcessing}
-              >
-                <Coins size={16} /> Free GEN Faucet
-              </button>
-            )}
           </div>
           <p className={styles.subtitle}>
-            Stake GEN tokens on the truthfulness of web claims. The VeriTrust AI Oracle will natively fetch all sources, read the content, and distribute the escrow pool to the winners.
+            Stake real GEN tokens on the truthfulness of web claims. The VeriTrust AI Oracle will natively fetch all sources, read the content, and directly pay the escrow pool to the winners' wallets!
           </p>
 
           <AnimatePresence>
@@ -307,11 +283,11 @@ export default function Home() {
                   <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--accent)' }}>{m.pool_yes} GEN</div>
                   {m.status === 'OPEN' && (
                     <button 
-                      onClick={() => handleBet(m.id, true, 100)}
-                      disabled={!address || isProcessing || balance < 100}
+                      onClick={() => handleBet(m.id, true, 10)}
+                      disabled={!address || isProcessing || balance < 10}
                       style={{ marginTop: '0.5rem', width: '100%', padding: '0.5rem', background: 'var(--accent)', color: 'black', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                     >
-                      Bet 100 GEN on YES
+                      Bet 10 GEN on YES
                     </button>
                   )}
                 </div>
@@ -320,11 +296,11 @@ export default function Home() {
                   <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--danger)' }}>{m.pool_no} GEN</div>
                   {m.status === 'OPEN' && (
                     <button 
-                      onClick={() => handleBet(m.id, false, 100)}
-                      disabled={!address || isProcessing || balance < 100}
+                      onClick={() => handleBet(m.id, false, 10)}
+                      disabled={!address || isProcessing || balance < 10}
                       style={{ marginTop: '0.5rem', width: '100%', padding: '0.5rem', background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                     >
-                      Bet 100 GEN on NO
+                      Bet 10 GEN on NO
                     </button>
                   )}
                 </div>

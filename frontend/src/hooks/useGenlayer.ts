@@ -53,7 +53,7 @@ export function useGenlayer() {
     setError(null);
   };
 
-  const _handleWrite = async (functionName: string, args: any[]) => {
+  const _handleWrite = async (functionName: string, args: any[], valueInWei: bigint = 0n) => {
     if (!address) throw new Error('Wallet not connected!');
     const writeClient = createClient({
       chain: studionet,
@@ -66,7 +66,7 @@ export function useGenlayer() {
         address: CONTRACT_ADDRESS as `0x${string}`,
         functionName,
         args,
-        value: 0n,
+        value: valueInWei,
       });
       
       try {
@@ -101,14 +101,30 @@ export function useGenlayer() {
     }
   };
 
-  const faucet = () => _handleWrite('faucet', []);
   const createMarket = (claim: string, urls: string[]) => _handleWrite('create_market', [claim, urls]);
-  const bet = (marketId: number, isYes: boolean, amount: number) => _handleWrite('bet', [marketId, isYes, amount]);
+  
+  const bet = (marketId: number, isYes: boolean, amountGen: number) => {
+    const valueInWei = BigInt(amountGen) * 1000000000000000000n; // Convert GEN to wei
+    return _handleWrite('bet', [marketId, isYes], valueInWei);
+  };
+  
   const resolveMarket = (marketId: number) => _handleWrite('resolve_market', [marketId]);
 
   const getBalance = useCallback(async (userAddress: string) => {
-    const res = await _handleRead('get_balance', [userAddress]);
-    return res ? Number(res) : 0;
+    try {
+      if (!window.ethereum) return 0;
+      const hexBalance = await window.ethereum.request({ 
+        method: 'eth_getBalance', 
+        params: [userAddress, 'latest'] 
+      });
+      // Convert wei hex to GEN string
+      const wei = BigInt(hexBalance);
+      const gen = Number(wei / 100000000000000n) / 10000; // Keep 4 decimals
+      return gen;
+    } catch (e) {
+      console.error(e);
+      return 0;
+    }
   }, []);
 
   const getAllMarkets = useCallback(async () => {
@@ -138,7 +154,6 @@ export function useGenlayer() {
     setError,
     connectWallet,
     disconnectWallet,
-    faucet,
     createMarket,
     bet,
     resolveMarket,

@@ -6,29 +6,17 @@ from genlayer import *
 
 class VeriTrustAI(gl.Contract):
     """
-    VeriTrust Prediction Market & Escrow Protocol
-    Users bet GEN tokens on factual claims. Validators natively fetch from multiple sources,
-    clean the HTML internally, reach consensus, and automatically slash losers / mint to winners.
+    VeriTrust Prediction Market & Escrow Protocol (Native GEN Token Edition)
+    Users bet actual native GEN tokens on factual claims. Validators natively fetch from multiple sources,
+    clean the HTML internally, reach consensus, and automatically payout real GEN tokens to winners.
+    Losers' stakes are locked/burned in the contract natively.
     """
 
-    balances: TreeMap[str, bigint]
     markets: TreeMap[bigint, str]
     next_market_id: bigint
 
     def __init__(self):
         self.next_market_id = 1
-
-    @gl.public.write
-    def faucet(self) -> int:
-        """Mints 1000 test GEN tokens to the caller."""
-        sender = str(gl.message.sender_address)
-        current = self.balances.get(sender, 0)
-        self.balances[sender] = current + 1000
-        return self.balances[sender]
-
-    @gl.public.view
-    def get_balance(self, address: str) -> int:
-        return self.balances.get(address, 0)
 
     @gl.public.write
     def create_market(self, claim: str, resolution_urls: list[str]) -> int:
@@ -56,16 +44,17 @@ class VeriTrustAI(gl.Contract):
         self.markets[market_id] = json.dumps(market_data)
         return market_id
 
-    @gl.public.write
-    def bet(self, market_id: int, prediction_is_true: bool, amount: int) -> bool:
-        """Locks GEN tokens into the market escrow pool."""
-        if amount <= 0:
+    @gl.public.write.payable
+    def bet(self, market_id: int, prediction_is_true: bool) -> bool:
+        """Locks native GEN tokens into the market escrow pool."""
+        val = gl.message.value
+        if val <= u256(0):
             raise Exception("Bet amount must be greater than zero")
             
+        # Convert u256 to standard int for JSON serialization
+        amount = int(val)
+            
         sender = str(gl.message.sender_address)
-        current_balance = self.balances.get(sender, 0)
-        if current_balance < amount:
-            raise Exception("Insufficient GEN token balance")
             
         market_json = self.markets.get(market_id, None)
         if not market_json:
@@ -74,11 +63,8 @@ class VeriTrustAI(gl.Contract):
         market = json.loads(market_json)
         if market["status"] != "OPEN":
             raise Exception("Market is already resolved")
-            
-        # Deduct balance
-        self.balances[sender] = current_balance - amount
         
-        # Add to pool
+        # Add to pool (tracking total wei)
         if prediction_is_true:
             market["pool_yes"] += amount
         else:
@@ -97,7 +83,7 @@ class VeriTrustAI(gl.Contract):
     def resolve_market(self, market_id: int) -> str:
         """
         Natively fetches multiple URLs, reaches LLM consensus on the claim,
-        and distributes escrowed funds (burns losers, mints rewards for winners).
+        and distributes native escrowed GEN tokens directly to winners' wallets.
         """
         market_json = self.markets.get(market_id, None)
         if not market_json:
@@ -160,24 +146,29 @@ class VeriTrustAI(gl.Contract):
         market["status"] = "RESOLVED"
         market["verdict"] = consensus_result
         
-        # Payout / Slashing Logic
+        # Native Payout Logic
         if consensus_result == "TRUE":
-            # YES wins. NO is burned.
+            # YES wins. NO is burned (locked in contract).
             for bet in market["bets"]:
                 if bet["prediction_is_true"]:
-                    current = self.balances.get(bet["sender"], 0)
-                    self.balances[bet["sender"]] = current + (bet["amount"] * 2)
+                    payout = u256(bet["amount"] * 2)
+                    recipient = gl.get_contract_at(bet["sender"])
+                    recipient.emit_transfer(value=payout, on='finalized')
+                    
         elif consensus_result == "FALSE":
             # NO wins. YES is burned.
             for bet in market["bets"]:
                 if not bet["prediction_is_true"]:
-                    current = self.balances.get(bet["sender"], 0)
-                    self.balances[bet["sender"]] = current + (bet["amount"] * 2)
+                    payout = u256(bet["amount"] * 2)
+                    recipient = gl.get_contract_at(bet["sender"])
+                    recipient.emit_transfer(value=payout, on='finalized')
+                    
         else:
             # Refund all bets if undetermined
             for bet in market["bets"]:
-                current = self.balances.get(bet["sender"], 0)
-                self.balances[bet["sender"]] = current + bet["amount"]
+                refund = u256(bet["amount"])
+                recipient = gl.get_contract_at(bet["sender"])
+                recipient.emit_transfer(value=refund, on='finalized')
                 
         self.markets[market_id] = json.dumps(market)
         return consensus_result
