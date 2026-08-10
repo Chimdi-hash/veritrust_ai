@@ -16,8 +16,6 @@ class VeriTrustAI(gl.Contract):
     next_market_id: bigint
 
     def __init__(self):
-        self.balances = TreeMap()
-        self.markets = TreeMap()
         self.next_market_id = 1
 
     @gl.public.write
