@@ -79,6 +79,9 @@ export function useGenlayer() {
       }
       return transactionHash;
     } catch (err: any) {
+      if (err.message?.includes('rate limited') || String(err).includes('rate limited')) {
+        throw new Error('Transaction rate limited by GenLayer RPC. Please wait 10 seconds and try again.');
+      }
       if (err.message?.includes('Server busy')) {
         throw new Error('The GenLayer Studio network is currently congested. Please wait a few moments and try again.');
       }

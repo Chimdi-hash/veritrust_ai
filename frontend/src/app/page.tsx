@@ -324,6 +324,29 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Betting History */}
+              <div style={{ background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9em', opacity: 0.8 }}>Betting History</h4>
+                {(!m.bets || m.bets.length === 0) ? (
+                  <div style={{ fontSize: '0.85em', opacity: 0.5 }}>No bets placed yet.</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '150px', overflowY: 'auto' }}>
+                    {m.bets.map((b: any, idx: number) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85em', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
+                        <span>
+                          <span style={{ opacity: 0.7 }}>{b.sender.substring(0, 6)}...{b.sender.substring(b.sender.length - 4)}</span>
+                          {' '}bet{' '}
+                          <strong style={{ color: b.prediction_is_true ? 'var(--accent)' : 'var(--danger)' }}>
+                            {b.prediction_is_true ? 'YES' : 'NO'}
+                          </strong>
+                        </span>
+                        <strong style={{ opacity: 0.9 }}>{b.amount} GEN</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {m.status === 'OPEN' && (
                 <button 
                   onClick={() => handleResolve(m.id)}
