@@ -9,7 +9,7 @@ import styles from './page.module.css';
 export default function Home() {
   const { address, isConnecting, error, setError, connectWallet, disconnectWallet, getBalance, createMarket, getAllMarkets, bet, resolveMarket } = useGenlayer();
   
-  const [balance, setBalance] = useState<number>(0);
+  const [balance, setBalance] = useState<number | null>(null);
   const [markets, setMarkets] = useState<any[]>([]);
   const [betAmounts, setBetAmounts] = useState<Record<number, number>>({});
   
@@ -20,12 +20,16 @@ export default function Home() {
   const [loadingMsg, setLoadingMsg] = useState('');
 
   const loadData = async () => {
-    if (address) {
-      const b = await getBalance(address);
-      setBalance(b);
+    try {
+      if (address) {
+        const b = await getBalance(address);
+        setBalance(b);
+      }
+      const m = await getAllMarkets();
+      if (m) setMarkets(m.reverse());
+    } catch (err) {
+      console.warn("Background poll failed:", err);
     }
-    const m = await getAllMarkets();
-    setMarkets(m.reverse());
   };
 
   useEffect(() => {
@@ -137,7 +141,7 @@ export default function Home() {
               >
                 <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center' }} title="Native GEN Balance">
                   <Coins size={16} color="var(--accent)" />
-                  {balance.toFixed(4)} GEN
+                  {balance !== null ? balance.toFixed(4) : '...'} GEN
                 </div>
                 <div className={styles.addressBadge}>
                   {address.substring(0, 6)}...{address.substring(address.length - 4)}
@@ -179,7 +183,7 @@ export default function Home() {
           </p>
 
           <AnimatePresence>
-            {address && balance < 10 && (
+            {address && balance === 0 && (
               <motion.div 
                 className={styles.errorBanner}
                 style={{ background: 'rgba(255, 165, 0, 0.2)', color: 'orange', borderColor: 'orange', marginBottom: '1rem' }}
@@ -188,7 +192,7 @@ export default function Home() {
                 exit={{ opacity: 0, height: 0 }}
               >
                 <AlertCircle size={20} />
-                <span><strong>Low GEN:</strong> You need native GEN tokens in your wallet to place a bet. You can obtain testnet GEN from the official GenLayer Discord faucet.</span>
+                <span><strong>Zero GEN:</strong> You have 0 GEN in your wallet. You can obtain testnet GEN from the official GenLayer Discord faucet.</span>
               </motion.div>
             )}
             {error && (
@@ -334,7 +338,7 @@ export default function Home() {
                     <div style={{ marginTop: '0.5rem' }}>
                       <button 
                         onClick={() => handleBet(m.id, true)}
-                        disabled={!address || isProcessing || balance < (betAmounts[m.id] || 10)}
+                        disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
                         style={{ width: '100%', padding: '0.5rem', background: 'var(--accent)', color: 'black', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                       >
                         YES
@@ -350,7 +354,7 @@ export default function Home() {
                     <div style={{ marginTop: '0.5rem' }}>
                       <button 
                         onClick={() => handleBet(m.id, false)}
-                        disabled={!address || isProcessing || balance < (betAmounts[m.id] || 10)}
+                        disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
                         style={{ width: '100%', padding: '0.5rem', background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                       >
                         NO

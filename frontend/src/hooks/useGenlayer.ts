@@ -79,22 +79,23 @@ export function useGenlayer() {
       }
       return transactionHash;
     } catch (err: any) {
-      if ((err.message?.includes('rate limited') || String(err).includes('rate limited')) && retries > 0) {
-        console.warn('Rate limited by GenLayer RPC. Auto-retrying in 5 seconds...');
+      const errMsg = err.message || String(err);
+      if ((errMsg.includes('rate limited') || errMsg.includes('Failed to fetch')) && retries > 0) {
+        console.warn('Network issue (Rate limited / Failed to fetch). Auto-retrying in 5 seconds...');
         await new Promise(r => setTimeout(r, 5000));
         return _handleWrite(functionName, args, valueInWei, retries - 1);
       }
-      if (err.message?.includes('rate limited') || String(err).includes('rate limited')) {
-        throw new Error('Transaction rate limited by GenLayer RPC. Please wait 10 seconds and try again.');
+      if (errMsg.includes('rate limited') || errMsg.includes('Failed to fetch')) {
+        throw new Error('Transaction failed due to network RPC limits. Please wait a few seconds and try again.');
       }
-      if (err.message?.includes('Server busy')) {
+      if (errMsg.includes('Server busy')) {
         throw new Error('The GenLayer Studio network is currently congested. Please wait a few moments and try again.');
       }
-      throw new Error(err.message || 'Transaction rejected or failed.');
+      throw new Error(errMsg || 'Transaction rejected or failed.');
     }
   };
 
-  const _handleRead = async (functionName: string, args: any[] = []) => {
+  const _handleRead = async (functionName: string, args: any[] = [], retries = 2): Promise<any> => {
     const readClient = createClient({ chain: studionet });
     try {
       const result = await readClient.readContract({
@@ -104,8 +105,13 @@ export function useGenlayer() {
       });
       return result;
     } catch (err: any) {
-      if (err.message?.includes('Server busy')) return null; // Keep polling
-      throw new Error(err.message || 'Failed to read from contract.');
+      const errMsg = err.message || String(err);
+      if ((errMsg.includes('rate limited') || errMsg.includes('Failed to fetch') || errMsg.includes('Server busy')) && retries > 0) {
+        await new Promise(r => setTimeout(r, 2000));
+        return _handleRead(functionName, args, retries - 1);
+      }
+      if (errMsg.includes('Server busy') || errMsg.includes('Failed to fetch')) return null; // Keep polling without crashing
+      throw new Error(errMsg || 'Failed to read from contract.');
     }
   };
 
