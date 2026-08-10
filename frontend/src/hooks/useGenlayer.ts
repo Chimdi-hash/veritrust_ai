@@ -2,8 +2,8 @@ import { useState, useCallback } from 'react';
 import { createClient } from 'genlayer-js';
 import { studionet } from 'genlayer-js/chains';
 
-// Replace this with the actual Genlayer contract address (Needs updating after redeploy)
-export const CONTRACT_ADDRESS = '0x76D5A67A78556a1AE9474156Ea16EDe5510f7DAb';
+// Update this after every contract deployment!
+export const CONTRACT_ADDRESS = '0x9D539E640EE0Ad51c67F31bdC3F9913bd5cCc732';
 
 export function useGenlayer() {
   const [address, setAddress] = useState<string | null>(null);
