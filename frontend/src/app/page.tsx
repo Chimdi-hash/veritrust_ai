@@ -11,6 +11,7 @@ export default function Home() {
   
   const [balance, setBalance] = useState<number>(0);
   const [markets, setMarkets] = useState<any[]>([]);
+  const [betAmounts, setBetAmounts] = useState<Record<number, number>>({});
   
   const [claim, setClaim] = useState('');
   const [urls, setUrls] = useState(['', '', '']);
@@ -59,7 +60,12 @@ export default function Home() {
     }
   };
 
-  const handleBet = async (marketId: number, isYes: boolean, amount: number) => {
+  const handleBet = async (marketId: number, isYes: boolean) => {
+    const amount = betAmounts[marketId] || 10;
+    if (amount <= 0) {
+      setError('Bet amount must be greater than 0.');
+      return;
+    }
     setIsProcessing(true);
     setLoadingMsg(`Placing ${amount} GEN bet on ${isYes ? 'YES' : 'NO'}...`);
     setError(null);
@@ -92,6 +98,15 @@ export default function Home() {
     if (v === 'FALSE') return 'var(--danger)';
     if (v === 'UNDETERMINED') return 'var(--warning)';
     return 'white';
+  };
+
+  const formatWei = (wei: string | number) => {
+    try {
+      // Convert string to BigInt, safely divide, then convert to Number for 4 decimals
+      return Number(BigInt(wei) / 100000000000000n) / 10000;
+    } catch (e) {
+      return 0;
+    }
   };
 
   return (
@@ -173,7 +188,7 @@ export default function Home() {
                 exit={{ opacity: 0, height: 0 }}
               >
                 <AlertCircle size={20} />
-                <span><strong>Insufficient GEN:</strong> You need at least 10 native GEN tokens in your wallet to place a bet. You can obtain testnet GEN from the official GenLayer Discord faucet.</span>
+                <span><strong>Low GEN:</strong> You need native GEN tokens in your wallet to place a bet. You can obtain testnet GEN from the official GenLayer Discord faucet.</span>
               </motion.div>
             )}
             {error && (
@@ -289,18 +304,40 @@ export default function Home() {
                 ))}
               </div>
 
+              {m.status === 'OPEN' && (
+                <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <label style={{ fontSize: '0.9em', opacity: 0.8 }}>Bet Amount (GEN):</label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    step="0.1"
+                    value={betAmounts[m.id] || 10}
+                    onChange={(e) => setBetAmounts({...betAmounts, [m.id]: Number(e.target.value)})}
+                    style={{ 
+                      width: '100px', 
+                      padding: '0.5rem', 
+                      borderRadius: '6px', 
+                      border: '1px solid rgba(255,255,255,0.2)', 
+                      background: 'rgba(0,0,0,0.3)', 
+                      color: 'white',
+                      fontSize: '1em'
+                    }}
+                  />
+                </div>
+              )}
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '0.8em', opacity: 0.6, marginBottom: '0.5rem' }}>YES POOL</div>
-                  <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--accent)' }}>{m.pool_yes} GEN</div>
+                  <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--accent)' }}>{formatWei(m.pool_yes)} GEN</div>
                   {m.status === 'OPEN' && (
                     <div style={{ marginTop: '0.5rem' }}>
                       <button 
-                        onClick={() => handleBet(m.id, true, 10)}
-                        disabled={!address || isProcessing || balance < 10}
+                        onClick={() => handleBet(m.id, true)}
+                        disabled={!address || isProcessing || balance < (betAmounts[m.id] || 10)}
                         style={{ width: '100%', padding: '0.5rem', background: 'var(--accent)', color: 'black', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                       >
-                        Bet 10 GEN on YES
+                        YES
                       </button>
                       <div style={{ fontSize: '0.7em', opacity: 0.6, marginTop: '0.25rem' }}>Deducts natively from wallet</div>
                     </div>
@@ -308,15 +345,15 @@ export default function Home() {
                 </div>
                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '0.8em', opacity: 0.6, marginBottom: '0.5rem' }}>NO POOL</div>
-                  <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--danger)' }}>{m.pool_no} GEN</div>
+                  <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--danger)' }}>{formatWei(m.pool_no)} GEN</div>
                   {m.status === 'OPEN' && (
                     <div style={{ marginTop: '0.5rem' }}>
                       <button 
-                        onClick={() => handleBet(m.id, false, 10)}
-                        disabled={!address || isProcessing || balance < 10}
+                        onClick={() => handleBet(m.id, false)}
+                        disabled={!address || isProcessing || balance < (betAmounts[m.id] || 10)}
                         style={{ width: '100%', padding: '0.5rem', background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                       >
-                        Bet 10 GEN on NO
+                        NO
                       </button>
                       <div style={{ fontSize: '0.7em', opacity: 0.6, marginTop: '0.25rem' }}>Deducts natively from wallet</div>
                     </div>
@@ -340,7 +377,7 @@ export default function Home() {
                             {b.prediction_is_true ? 'YES' : 'NO'}
                           </strong>
                         </span>
-                        <strong style={{ opacity: 0.9 }}>{b.amount} GEN</strong>
+                        <strong style={{ opacity: 0.9 }}>{formatWei(b.amount)} GEN</strong>
                       </div>
                     ))}
                   </div>
