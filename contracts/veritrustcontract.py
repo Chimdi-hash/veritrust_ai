@@ -11,9 +11,9 @@ class VeriTrustAI(gl.Contract):
     clean the HTML internally, reach consensus, and automatically slash losers / mint to winners.
     """
 
-    balances: TreeMap[str, int]
-    markets: TreeMap[int, str]
-    next_market_id: int
+    balances: TreeMap[str, bigint]
+    markets: TreeMap[bigint, str]
+    next_market_id: bigint
 
     def __init__(self):
         self.balances = TreeMap()
