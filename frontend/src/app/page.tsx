@@ -164,6 +164,18 @@ export default function Home() {
           </p>
 
           <AnimatePresence>
+            {address && balance < 10 && (
+              <motion.div 
+                className={styles.errorBanner}
+                style={{ background: 'rgba(255, 165, 0, 0.2)', color: 'orange', borderColor: 'orange', marginBottom: '1rem' }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <AlertCircle size={20} />
+                <span><strong>Insufficient GEN:</strong> You need at least 10 native GEN tokens in your wallet to place a bet. You can obtain testnet GEN from the official GenLayer Discord faucet.</span>
+              </motion.div>
+            )}
             {error && (
               <motion.div 
                 className={styles.errorBanner}
@@ -282,26 +294,32 @@ export default function Home() {
                   <div style={{ fontSize: '0.8em', opacity: 0.6, marginBottom: '0.5rem' }}>YES POOL</div>
                   <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--accent)' }}>{m.pool_yes} GEN</div>
                   {m.status === 'OPEN' && (
-                    <button 
-                      onClick={() => handleBet(m.id, true, 10)}
-                      disabled={!address || isProcessing || balance < 10}
-                      style={{ marginTop: '0.5rem', width: '100%', padding: '0.5rem', background: 'var(--accent)', color: 'black', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                    >
-                      Bet 10 GEN on YES
-                    </button>
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <button 
+                        onClick={() => handleBet(m.id, true, 10)}
+                        disabled={!address || isProcessing || balance < 10}
+                        style={{ width: '100%', padding: '0.5rem', background: 'var(--accent)', color: 'black', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        Bet 10 GEN on YES
+                      </button>
+                      <div style={{ fontSize: '0.7em', opacity: 0.6, marginTop: '0.25rem' }}>Deducts natively from wallet</div>
+                    </div>
                   )}
                 </div>
                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '0.8em', opacity: 0.6, marginBottom: '0.5rem' }}>NO POOL</div>
                   <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--danger)' }}>{m.pool_no} GEN</div>
                   {m.status === 'OPEN' && (
-                    <button 
-                      onClick={() => handleBet(m.id, false, 10)}
-                      disabled={!address || isProcessing || balance < 10}
-                      style={{ marginTop: '0.5rem', width: '100%', padding: '0.5rem', background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                    >
-                      Bet 10 GEN on NO
-                    </button>
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <button 
+                        onClick={() => handleBet(m.id, false, 10)}
+                        disabled={!address || isProcessing || balance < 10}
+                        style={{ width: '100%', padding: '0.5rem', background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        Bet 10 GEN on NO
+                      </button>
+                      <div style={{ fontSize: '0.7em', opacity: 0.6, marginTop: '0.25rem' }}>Deducts natively from wallet</div>
+                    </div>
                   )}
                 </div>
               </div>
