@@ -107,7 +107,7 @@ export default function Home() {
 
   const getBadgeClass = (status: string, verdict: string) => {
     if (status === 'OPEN') return 'badge-open';
-    if (status === 'RESOLVED') return verdict === 'TRUE' ? 'badge-resolved' : 'badge-rejected';
+    if (status === 'RESOLVED') return verdict === 'TRUE' || verdict === 'FALSE' ? 'badge-resolved' : 'badge-in-progress';
     return 'badge-in-progress';
   };
 
@@ -117,6 +117,17 @@ export default function Home() {
     } catch (e) {
       return 0;
     }
+  };
+
+  const renderBetStatus = (market: any, bet: any) => {
+    if (market.status !== 'RESOLVED') return null;
+    if (market.verdict === 'UNDETERMINED') {
+      return <span className="badge" style={{background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', border: '1px solid var(--warning)', marginLeft: '0.5rem'}}>REFUNDED</span>;
+    }
+    const isWinner = (market.verdict === 'TRUE' && bet.prediction_is_true) || (market.verdict === 'FALSE' && !bet.prediction_is_true);
+    return isWinner 
+      ? <span className="badge badge-resolved" style={{marginLeft: '0.5rem'}}>PAID OUT</span> 
+      : <span className="badge" style={{background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid var(--danger)', marginLeft: '0.5rem'}}>BURNED</span>;
   };
 
   return (
@@ -395,7 +406,10 @@ export default function Home() {
                             {b.prediction_is_true ? 'YES' : 'NO'}
                           </span>
                         </span>
-                        <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>{formatWei(b.amount)} GEN</span>
+                        <div>
+                          <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>{formatWei(b.amount)} GEN</span>
+                          {renderBetStatus(m, b)}
+                        </div>
                       </div>
                     ))}
                   </div>
