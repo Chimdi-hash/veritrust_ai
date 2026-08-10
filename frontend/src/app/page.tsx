@@ -12,6 +12,7 @@ export default function Home() {
   const [balance, setBalance] = useState<number | null>(null);
   const [markets, setMarkets] = useState<any[]>([]);
   const [betAmounts, setBetAmounts] = useState<Record<number, number>>({});
+  const [activeTab, setActiveTab] = useState<'markets' | 'create'>('markets');
   
   const [claim, setClaim] = useState('');
   const [urls, setUrls] = useState(['', '', '']);
@@ -177,15 +178,33 @@ export default function Home() {
       </header>
 
       <main>
-        <motion.div 
-          className="card"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h2 style={{ marginBottom: '1rem' }}>Open Market</h2>
-          <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>
-            Stake real GEN tokens on the truthfulness of web claims. The VeriTrust AI Oracle will natively fetch all sources, evaluate them against LLM consensus, and pay the escrow pool directly to the winners.
-          </p>
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '1rem' }}>
+          <button 
+            className={activeTab === 'markets' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setActiveTab('markets')}
+            style={{ borderRadius: '20px', padding: '0.5rem 1.5rem', fontSize: '0.9rem' }}
+          >
+            ACTIVE MARKETS
+          </button>
+          <button 
+            className={activeTab === 'create' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setActiveTab('create')}
+            style={{ borderRadius: '20px', padding: '0.5rem 1.5rem', fontSize: '0.9rem' }}
+          >
+            + NEW MARKET
+          </button>
+        </div>
+
+        {activeTab === 'create' && (
+          <motion.div 
+            className="card"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h2 style={{ marginBottom: '1rem' }}>Open Market</h2>
+            <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>
+              Stake real GEN tokens on the truthfulness of web claims. The VeriTrust AI Oracle will natively fetch all sources, evaluate them against LLM consensus, and pay the escrow pool directly to the winners.
+            </p>
 
           <AnimatePresence>
             {address && balance === 0 && (
@@ -270,13 +289,18 @@ export default function Home() {
             </button>
           </form>
         </motion.div>
+        )}
 
-        <h2 style={{ paddingLeft: '1rem', marginBottom: '1.5rem', borderLeft: '4px solid var(--primary)' }}>ACTIVE MARKETS</h2>
-        <div className="grid">
-          {markets.length === 0 && (
-            <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', gridColumn: '1 / -1' }}>No markets found.</div>
-          )}
-          {markets.map((m) => (
+        {activeTab === 'markets' && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="grid">
+              {markets.length === 0 && (
+                <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', gridColumn: '1 / -1' }}>No markets found.</div>
+              )}
+              {markets.map((m) => (
             <motion.div 
               key={m.id}
               className="card"
@@ -383,7 +407,9 @@ export default function Home() {
               )}
             </motion.div>
           ))}
-        </div>
+          </div>
+        </motion.div>
+        )}
       </main>
     </div>
   );
