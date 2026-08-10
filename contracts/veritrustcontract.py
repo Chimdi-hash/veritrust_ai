@@ -157,25 +157,29 @@ class VeriTrustAI(gl.Contract):
         market["remark"] = remark
         
         # Native Payout Logic
+        total_pool = market["pool_yes"] + market["pool_no"]
+        
         if consensus_result == "TRUE":
             # YES wins. NO is burned (locked in contract).
-            for bet in market["bets"]:
-                if bet["prediction_is_true"]:
-                    payout = u256(bet["amount"] * 2)
-                    EOA(Address(bet["sender"])).emit_transfer(value=payout, on='finalized')
-                    
+            if market["pool_yes"] > 0:
+                for bet in market["bets"]:
+                    if bet["prediction_is_true"]:
+                        payout = (bet["amount"] * total_pool) // market["pool_yes"]
+                        EOA(Address(bet["sender"])).emit_transfer(value=u256(payout), on='finalized')
+                        
         elif consensus_result == "FALSE":
             # NO wins. YES is burned.
-            for bet in market["bets"]:
-                if not bet["prediction_is_true"]:
-                    payout = u256(bet["amount"] * 2)
-                    EOA(Address(bet["sender"])).emit_transfer(value=payout, on='finalized')
-                    
+            if market["pool_no"] > 0:
+                for bet in market["bets"]:
+                    if not bet["prediction_is_true"]:
+                        payout = (bet["amount"] * total_pool) // market["pool_no"]
+                        EOA(Address(bet["sender"])).emit_transfer(value=u256(payout), on='finalized')
+                        
         else:
             # Refund all bets if undetermined
             for bet in market["bets"]:
-                refund = u256(bet["amount"])
-                EOA(Address(bet["sender"])).emit_transfer(value=refund, on='finalized')
+                refund = bet["amount"]
+                EOA(Address(bet["sender"])).emit_transfer(value=u256(refund), on='finalized')
                 
         self.markets[market_id] = json.dumps(market)
         return consensus_result
