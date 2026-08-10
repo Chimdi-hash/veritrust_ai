@@ -3,6 +3,11 @@ import json
 import re
 from genlayer import *
 
+@gl.evm.contract_interface
+class EOA:
+    class View: pass
+    class Write:
+        def transfer(self, value: u256): pass
 
 class VeriTrustAI(gl.Contract):
     """
@@ -152,23 +157,20 @@ class VeriTrustAI(gl.Contract):
             for bet in market["bets"]:
                 if bet["prediction_is_true"]:
                     payout = u256(bet["amount"] * 2)
-                    recipient = gl.get_contract_at(Address(bet["sender"]))
-                    recipient.emit_transfer(value=payout, on='finalized')
+                    EOA(Address(bet["sender"])).emit_transfer(value=payout, on='finalized')
                     
         elif consensus_result == "FALSE":
             # NO wins. YES is burned.
             for bet in market["bets"]:
                 if not bet["prediction_is_true"]:
                     payout = u256(bet["amount"] * 2)
-                    recipient = gl.get_contract_at(Address(bet["sender"]))
-                    recipient.emit_transfer(value=payout, on='finalized')
+                    EOA(Address(bet["sender"])).emit_transfer(value=payout, on='finalized')
                     
         else:
             # Refund all bets if undetermined
             for bet in market["bets"]:
                 refund = u256(bet["amount"])
-                recipient = gl.get_contract_at(Address(bet["sender"]))
-                recipient.emit_transfer(value=refund, on='finalized')
+                EOA(Address(bet["sender"])).emit_transfer(value=refund, on='finalized')
                 
         self.markets[market_id] = json.dumps(market)
         return consensus_result

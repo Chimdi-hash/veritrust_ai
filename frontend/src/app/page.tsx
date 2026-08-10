@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet, ShieldCheck, AlertCircle, Loader2, Link as LinkIcon, FileText, Plus, Coins, Play } from 'lucide-react';
 import { useGenlayer } from '@/hooks/useGenlayer';
-import styles from './page.module.css';
+import './globals.css';
 
 export default function Home() {
   const { address, isConnecting, error, setError, connectWallet, disconnectWallet, getBalance, createMarket, getAllMarkets, bet, resolveMarket } = useGenlayer();
@@ -34,7 +34,7 @@ export default function Home() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 20000); // Increased from 5s to 20s to avoid rate limits
+    const interval = setInterval(loadData, 20000);
     return () => clearInterval(interval);
   }, [address]);
 
@@ -97,16 +97,21 @@ export default function Home() {
     }
   };
 
-  const getStatusColor = (v: string) => {
-    if (v === 'TRUE') return 'var(--accent)';
-    if (v === 'FALSE') return 'var(--danger)';
-    if (v === 'UNDETERMINED') return 'var(--warning)';
-    return 'white';
+  const getStatusColorClass = (v: string) => {
+    if (v === 'TRUE') return 'text-success';
+    if (v === 'FALSE') return 'text-danger';
+    if (v === 'UNDETERMINED') return 'text-warning';
+    return '';
+  };
+
+  const getBadgeClass = (status: string, verdict: string) => {
+    if (status === 'OPEN') return 'badge-open';
+    if (status === 'RESOLVED') return verdict === 'TRUE' ? 'badge-resolved' : 'badge-rejected';
+    return 'badge-in-progress';
   };
 
   const formatWei = (wei: string | number) => {
     try {
-      // Convert string to BigInt, safely divide, then convert to Number for 4 decimals
       return Number(BigInt(wei) / 100000000000000n) / 10000;
     } catch (e) {
       return 0;
@@ -114,19 +119,21 @@ export default function Home() {
   };
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
+    <div className="container">
+      <header className="header">
         <motion.div 
-          className={styles.logo}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}
         >
-          <ShieldCheck size={28} color="var(--primary)" />
-          VeriTrust Escrow
+          <ShieldCheck size={36} color="var(--primary)" style={{ filter: 'drop-shadow(0 0 10px var(--primary-glow))' }} />
+          <div>
+            <h1 className="header-title">VeriTrust AI</h1>
+            <div className="header-subtitle">DECENTRALIZED ESCROW</div>
+          </div>
         </motion.div>
         
         <motion.div 
-          className={styles.walletActions}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
         >
@@ -136,19 +143,19 @@ export default function Home() {
                 key="connected"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={styles.addressContainer}
-                style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}
+                className="header-badge-container"
               >
-                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center' }} title="Native GEN Balance">
-                  <Coins size={16} color="var(--accent)" />
+                <div className="badge badge-account" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0.5rem 1rem' }}>
+                  <Coins size={16} />
                   {balance !== null ? balance.toFixed(4) : '...'} GEN
                 </div>
-                <div className={styles.addressBadge}>
+                <div className="badge badge-open" style={{ padding: '0.5rem 1rem' }}>
                   {address.substring(0, 6)}...{address.substring(address.length - 4)}
                 </div>
                 <button 
                   onClick={disconnectWallet}
-                  className={styles.btnDisconnect}
+                  className="btn-secondary"
+                  style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
                 >
                   Disconnect
                 </button>
@@ -156,48 +163,45 @@ export default function Home() {
             ) : (
               <motion.button 
                 key="connect"
-                className={styles.btnConnect}
+                className="btn-primary"
                 onClick={connectWallet}
                 disabled={isConnecting}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
               >
                 {isConnecting ? <Loader2 className="animate-spin" size={18} /> : <Wallet size={18} />}
-                Connect Wallet
+                CONNECT WALLET
               </motion.button>
             )}
           </AnimatePresence>
         </motion.div>
       </header>
 
-      <main className={styles.main}>
+      <main>
         <motion.div 
-          className={styles.card}
+          className="card"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ marginBottom: '2rem' }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <h1 className={styles.title} style={{ margin: 0 }}>Prediction Markets</h1>
-          </div>
-          <p className={styles.subtitle}>
-            Stake real GEN tokens on the truthfulness of web claims. The VeriTrust AI Oracle will natively fetch all sources, read the content, and directly pay the escrow pool to the winners' wallets!
+          <h2 style={{ marginBottom: '1rem' }}>Open Market</h2>
+          <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>
+            Stake real GEN tokens on the truthfulness of web claims. The VeriTrust AI Oracle will natively fetch all sources, evaluate them against LLM consensus, and pay the escrow pool directly to the winners.
           </p>
 
           <AnimatePresence>
             {address && balance === 0 && (
               <motion.div 
-                className={styles.errorBanner}
-                style={{ background: 'rgba(255, 165, 0, 0.2)', color: 'orange', borderColor: 'orange', marginBottom: '1rem' }}
+                style={{ background: 'rgba(255, 165, 0, 0.1)', color: 'var(--warning)', border: '1px solid var(--warning)', padding: '1rem', borderRadius: '4px', display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.5rem', boxShadow: '0 0 10px rgba(255, 179, 0, 0.2)' }}
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
               >
                 <AlertCircle size={20} />
-                <span><strong>Zero GEN:</strong> You have 0 GEN in your wallet. You can obtain testnet GEN from the official GenLayer Discord faucet.</span>
+                <span><strong>Zero GEN:</strong> You have 0 GEN in your wallet. Obtain testnet GEN from the official GenLayer Discord faucet.</span>
               </motion.div>
             )}
             {error && (
               <motion.div 
-                className={styles.errorBanner}
+                style={{ background: 'rgba(255, 0, 60, 0.1)', color: 'var(--danger)', border: '1px solid var(--danger)', padding: '1rem', borderRadius: '4px', display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.5rem', boxShadow: '0 0 10px rgba(255, 0, 60, 0.2)' }}
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
@@ -208,8 +212,7 @@ export default function Home() {
             )}
             {isProcessing && (
               <motion.div 
-                className={styles.errorBanner}
-                style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'white', borderColor: 'transparent' }}
+                style={{ background: 'rgba(0, 243, 255, 0.05)', color: 'var(--primary)', border: '1px solid var(--primary)', padding: '1rem', borderRadius: '4px', display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.5rem', boxShadow: '0 0 10px rgba(0, 243, 255, 0.2)' }}
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
@@ -220,16 +223,13 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          <form onSubmit={handleCreateMarket} style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: '12px', marginTop: '2rem' }}>
-            <h3 style={{ marginTop: 0, marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>Create New Market</h3>
-            
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Claim</label>
+          <form onSubmit={handleCreateMarket}>
+            <div>
+              <label className="detail-label" style={{ display: 'block', marginBottom: '0.5rem' }}>CLAIM</label>
               <div style={{ position: 'relative' }}>
-                <FileText size={18} style={{ position: 'absolute', left: '1rem', top: '1.1rem', color: '#64748b' }} />
+                <FileText size={18} style={{ position: 'absolute', left: '1rem', top: '1rem', color: 'var(--primary)' }} />
                 <input 
                   type="text" 
-                  className={styles.input} 
                   placeholder="e.g., Apple acquired OpenAI in 2026." 
                   style={{ paddingLeft: '3rem' }}
                   value={claim}
@@ -239,15 +239,14 @@ export default function Home() {
               </div>
             </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Source URLs (Multi-Source Verification)</label>
+            <div>
+              <label className="detail-label" style={{ display: 'block', marginBottom: '0.5rem' }}>MULTI-SOURCE URLS</label>
               {urls.map((u, i) => (
-                <div style={{ position: 'relative', marginBottom: '0.5rem' }} key={i}>
-                  <LinkIcon size={18} style={{ position: 'absolute', left: '1rem', top: '1.1rem', color: '#64748b' }} />
+                <div style={{ position: 'relative' }} key={i}>
+                  <LinkIcon size={18} style={{ position: 'absolute', left: '1rem', top: '1rem', color: 'var(--primary)' }} />
                   <input 
                     type="url" 
-                    className={styles.input} 
-                    placeholder={`Source URL ${i+1} ${i === 0 ? '(Required)' : '(Optional)'}`}
+                    placeholder={`SOURCE URL ${i+1} ${i === 0 ? '(REQUIRED)' : '(OPTIONAL)'}`}
                     style={{ paddingLeft: '3rem' }}
                     value={u}
                     onChange={(e) => {
@@ -263,125 +262,109 @@ export default function Home() {
 
             <button 
               type="submit" 
-              className={styles.btnSubmit} 
+              className="btn-primary"
               disabled={!address || isProcessing}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem' }}
             >
-              <Plus size={20} /> Open Prediction Market
+              <Plus size={20} /> INITIALIZE MARKET
             </button>
           </form>
         </motion.div>
 
-        <h2 style={{ paddingLeft: '1rem', marginBottom: '1rem' }}>Active Markets</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <h2 style={{ paddingLeft: '1rem', marginBottom: '1.5rem', borderLeft: '4px solid var(--primary)' }}>ACTIVE MARKETS</h2>
+        <div className="grid">
           {markets.length === 0 && (
-            <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem' }}>No markets created yet.</div>
+            <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', gridColumn: '1 / -1' }}>No markets found.</div>
           )}
           {markets.map((m) => (
             <motion.div 
               key={m.id}
-              className={styles.card}
+              className="card"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              style={{ borderLeft: `4px solid ${m.status === 'RESOLVED' ? getStatusColor(m.verdict) : 'var(--primary)'}` }}
+              style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ fontSize: '0.8em', opacity: 0.6 }}>Market #{m.id} • Created by {m.creator.substring(0, 6)}...</div>
-                <div style={{ 
-                  background: m.status === 'OPEN' ? 'rgba(255,255,255,0.1)' : getStatusColor(m.verdict), 
-                  color: m.status === 'OPEN' ? 'white' : 'black',
-                  padding: '0.2rem 0.5rem', 
-                  borderRadius: '4px', 
-                  fontSize: '0.8em',
-                  fontWeight: 'bold' 
-                }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div className="detail-label">MARKET #{m.id}</div>
+                <div className={`badge ${getBadgeClass(m.status, m.verdict)}`}>
                   {m.status === 'OPEN' ? 'OPEN' : m.verdict}
                 </div>
               </div>
               
-              <h3 style={{ margin: '1rem 0' }}>{m.claim}</h3>
+              <h3 style={{ flexGrow: 1, marginBottom: '1.5rem', fontSize: '1.3rem' }}>{m.claim}</h3>
               
-              <div style={{ fontSize: '0.85em', opacity: 0.8, marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <strong>Sources:</strong>
-                {m.resolution_urls.map((u: string, i: number) => (
-                  <a key={i} href={u} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', wordBreak: 'break-all' }}>{u}</a>
-                ))}
+              <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="detail-label" style={{ marginBottom: '0.5rem' }}>SOURCES</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {m.resolution_urls.map((u: string, i: number) => (
+                    <a key={i} href={u} target="_blank" rel="noreferrer" style={{ wordBreak: 'break-all', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <LinkIcon size={14} /> {u}
+                    </a>
+                  ))}
+                </div>
               </div>
 
               {m.status === 'OPEN' && (
-                <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <label style={{ fontSize: '0.9em', opacity: 0.8 }}>Bet Amount (GEN):</label>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label className="detail-label" style={{ display: 'block', marginBottom: '0.5rem' }}>STAKE (GEN)</label>
                   <input 
                     type="number" 
                     min="1"
                     step="0.1"
                     value={betAmounts[m.id] || 10}
                     onChange={(e) => setBetAmounts({...betAmounts, [m.id]: Number(e.target.value)})}
-                    style={{ 
-                      width: '100px', 
-                      padding: '0.5rem', 
-                      borderRadius: '6px', 
-                      border: '1px solid rgba(255,255,255,0.2)', 
-                      background: 'rgba(0,0,0,0.3)', 
-                      color: 'white',
-                      fontSize: '1em'
-                    }}
+                    style={{ marginBottom: 0, textAlign: 'center', fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)' }}
                   />
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.8em', opacity: 0.6, marginBottom: '0.5rem' }}>YES POOL</div>
-                  <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--accent)' }}>{formatWei(m.pool_yes)} GEN</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ background: 'rgba(57, 255, 20, 0.05)', border: '1px solid rgba(57, 255, 20, 0.2)', padding: '1.5rem 1rem', borderRadius: '4px', textAlign: 'center', boxShadow: 'inset 0 0 10px rgba(57, 255, 20, 0.05)' }}>
+                  <div className="detail-label" style={{ color: 'var(--success)', marginBottom: '0.5rem' }}>YES POOL</div>
+                  <div className="text-success" style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>{formatWei(m.pool_yes)}</div>
                   {m.status === 'OPEN' && (
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <button 
-                        onClick={() => handleBet(m.id, true)}
-                        disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
-                        style={{ width: '100%', padding: '0.5rem', background: 'var(--accent)', color: 'black', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                      >
-                        YES
-                      </button>
-                      <div style={{ fontSize: '0.7em', opacity: 0.6, marginTop: '0.25rem' }}>Deducts natively from wallet</div>
-                    </div>
+                    <button 
+                      className="btn-success"
+                      onClick={() => handleBet(m.id, true)}
+                      disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
+                      style={{ width: '100%', marginTop: '1rem', padding: '0.75rem' }}
+                    >
+                      YES
+                    </button>
                   )}
                 </div>
-                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.8em', opacity: 0.6, marginBottom: '0.5rem' }}>NO POOL</div>
-                  <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--danger)' }}>{formatWei(m.pool_no)} GEN</div>
+                <div style={{ background: 'rgba(255, 0, 60, 0.05)', border: '1px solid rgba(255, 0, 60, 0.2)', padding: '1.5rem 1rem', borderRadius: '4px', textAlign: 'center', boxShadow: 'inset 0 0 10px rgba(255, 0, 60, 0.05)' }}>
+                  <div className="detail-label" style={{ color: 'var(--danger)', marginBottom: '0.5rem' }}>NO POOL</div>
+                  <div className="text-danger" style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>{formatWei(m.pool_no)}</div>
                   {m.status === 'OPEN' && (
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <button 
-                        onClick={() => handleBet(m.id, false)}
-                        disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
-                        style={{ width: '100%', padding: '0.5rem', background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                      >
-                        NO
-                      </button>
-                      <div style={{ fontSize: '0.7em', opacity: 0.6, marginTop: '0.25rem' }}>Deducts natively from wallet</div>
-                    </div>
+                    <button 
+                      className="btn-danger"
+                      onClick={() => handleBet(m.id, false)}
+                      disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
+                      style={{ width: '100%', marginTop: '1rem', padding: '0.75rem' }}
+                    >
+                      NO
+                    </button>
                   )}
                 </div>
               </div>
 
-              {/* Betting History */}
-              <div style={{ background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9em', opacity: 0.8 }}>Betting History</h4>
+              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="detail-label" style={{ marginBottom: '1rem' }}>LEDGER</div>
                 {(!m.bets || m.bets.length === 0) ? (
-                  <div style={{ fontSize: '0.85em', opacity: 0.5 }}>No bets placed yet.</div>
+                  <div style={{ fontSize: '0.9rem', color: '#64748b', textAlign: 'center' }}>No transactions.</div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '150px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '0.5rem' }}>
                     {m.bets.map((b: any, idx: number) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85em', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                        <span>
-                          <span style={{ opacity: 0.7 }}>{b.sender.substring(0, 6)}...{b.sender.substring(b.sender.length - 4)}</span>
-                          {' '}bet{' '}
-                          <strong style={{ color: b.prediction_is_true ? 'var(--accent)' : 'var(--danger)' }}>
+                      <div key={idx} className="detail-row" style={{ margin: 0, paddingBottom: 0, border: 'none' }}>
+                        <span style={{ fontSize: '0.9rem' }}>
+                          <span style={{ color: '#94a3b8' }}>{b.sender.substring(0, 6)}...</span>
+                          {' '}stake{' '}
+                          <span className={b.prediction_is_true ? 'text-success' : 'text-danger'} style={{ fontWeight: 'bold' }}>
                             {b.prediction_is_true ? 'YES' : 'NO'}
-                          </strong>
+                          </span>
                         </span>
-                        <strong style={{ opacity: 0.9 }}>{formatWei(b.amount)} GEN</strong>
+                        <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>{formatWei(b.amount)} GEN</span>
                       </div>
                     ))}
                   </div>
@@ -390,11 +373,12 @@ export default function Home() {
 
               {m.status === 'OPEN' && (
                 <button 
+                  className="btn-primary"
                   onClick={() => handleResolve(m.id)}
                   disabled={!address || isProcessing}
-                  style={{ width: '100%', padding: '0.75rem', background: 'transparent', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold' }}
+                  style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: 'auto' }}
                 >
-                  <Play size={18} /> Resolve Market (Trigger Oracle)
+                  <Play size={18} /> TRIGGER ORACLE
                 </button>
               )}
             </motion.div>
