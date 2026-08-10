@@ -127,29 +127,35 @@ class VeriTrustAI(gl.Contract):
                 f"Market Claim: '{claim}'\n\n"
                 f"Based ONLY on the provided sources, is this claim TRUE or FALSE? "
                 f"If the sources do not provide enough information to definitively prove or disprove it, answer UNDETERMINED.\n"
-                f"Respond with EXACTLY ONE WORD: 'TRUE', 'FALSE', or 'UNDETERMINED'."
+                f"Respond using EXACTLY this format: VERDICT|REMARK\n"
+                f"Where VERDICT is 'TRUE', 'FALSE', or 'UNDETERMINED', and REMARK is a brief 1-2 sentence explanation of why."
             )
             
-            llm_output = gl.nondet.exec_prompt(prompt).strip().upper()
-            
-            if "TRUE" in llm_output:
-                return "TRUE"
-            elif "FALSE" in llm_output:
-                return "FALSE"
-            else:
-                return "UNDETERMINED"
+            return gl.nondet.exec_prompt(prompt).strip()
 
         # Force consensus across validators
         try:
-            consensus_result = gl.eq_principle.prompt_comparative(
+            consensus_output = gl.eq_principle.prompt_comparative(
                 run_llm,
-                "The verdicts must match exactly (TRUE, FALSE, or UNDETERMINED)."
+                "The VERDICT part before the '|' character must match exactly (TRUE, FALSE, or UNDETERMINED). Ignore differences in the REMARK part."
             )
         except Exception as e:
             raise Exception(f"Consensus Execution Exception: {str(e)}")
             
+        parts = consensus_output.split('|', 1)
+        consensus_result = parts[0].strip().upper()
+        remark = parts[1].strip() if len(parts) > 1 else "No remark provided."
+        
+        if "TRUE" in consensus_result:
+            consensus_result = "TRUE"
+        elif "FALSE" in consensus_result:
+            consensus_result = "FALSE"
+        else:
+            consensus_result = "UNDETERMINED"
+            
         market["status"] = "RESOLVED"
         market["verdict"] = consensus_result
+        market["remark"] = remark
         
         # Native Payout Logic
         if consensus_result == "TRUE":

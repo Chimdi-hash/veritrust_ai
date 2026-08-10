@@ -317,6 +317,13 @@ export default function Home() {
               
               <h3 style={{ flexGrow: 1, marginBottom: '1.5rem', fontSize: '1.3rem' }}>{m.claim}</h3>
               
+              {m.status === 'RESOLVED' && m.remark && (
+                <div style={{ marginBottom: '1.5rem', background: 'rgba(56, 189, 248, 0.05)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                  <div className="detail-label" style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>ORACLE REMARK</div>
+                  <div style={{ fontSize: '0.95rem', fontStyle: 'italic', color: '#e2e8f0' }}>"{m.remark}"</div>
+                </div>
+              )}
+              
               <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div className="detail-label" style={{ marginBottom: '0.5rem' }}>SOURCES</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
