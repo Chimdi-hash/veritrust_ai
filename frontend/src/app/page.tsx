@@ -29,7 +29,7 @@ export default function Home() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 5000);
+    const interval = setInterval(loadData, 20000); // Increased from 5s to 20s to avoid rate limits
     return () => clearInterval(interval);
   }, [address]);
 

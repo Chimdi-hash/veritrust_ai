@@ -53,7 +53,7 @@ export function useGenlayer() {
     setError(null);
   };
 
-  const _handleWrite = async (functionName: string, args: any[], valueInWei: bigint = 0n) => {
+  const _handleWrite = async (functionName: string, args: any[], valueInWei: bigint = 0n, retries = 2): Promise<any> => {
     if (!address) throw new Error('Wallet not connected!');
     const writeClient = createClient({
       chain: studionet,
@@ -79,6 +79,11 @@ export function useGenlayer() {
       }
       return transactionHash;
     } catch (err: any) {
+      if ((err.message?.includes('rate limited') || String(err).includes('rate limited')) && retries > 0) {
+        console.warn('Rate limited by GenLayer RPC. Auto-retrying in 5 seconds...');
+        await new Promise(r => setTimeout(r, 5000));
+        return _handleWrite(functionName, args, valueInWei, retries - 1);
+      }
       if (err.message?.includes('rate limited') || String(err).includes('rate limited')) {
         throw new Error('Transaction rate limited by GenLayer RPC. Please wait 10 seconds and try again.');
       }
