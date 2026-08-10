@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { createClient } from 'genlayer-js';
 import { studionet } from 'genlayer-js/chains';
 
-// Replace this with the actual Genlayer contract address
+// Replace this with the actual Genlayer contract address (Needs updating after redeploy)
 export const CONTRACT_ADDRESS = '0xFD5f69aa947EFB7E4993fa911382Ab57f3be148E';
-// We use the studionet chain from genlayer-js as requested
 
 export function useGenlayer() {
   const [address, setAddress] = useState<string | null>(null);
@@ -18,43 +17,32 @@ export function useGenlayer() {
       if (!window.ethereum) {
         throw new Error('No crypto wallet detected. Please install MetaMask or Rabby.');
       }
-      
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      if (!accounts || accounts.length === 0) {
-        throw new Error('Connection rejected by user.');
-      }
+      if (!accounts || accounts.length === 0) throw new Error('Connection rejected by user.');
       
-      // Attempt to switch to Studio network
       const chainIdHex = `0x${studionet.id.toString(16)}`;
       try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: chainIdHex }],
-        });
-      } catch (switchError: unknown) {
-        // This error code indicates that the chain has not been added to MetaMask.
-        if ((switchError as { code?: number }).code === 4902) {
+        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainIdHex }] });
+      } catch (switchError: any) {
+        if (switchError.code === 4902) {
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
-            params: [
-              {
-                chainId: chainIdHex,
-                chainName: studionet.name,
-                rpcUrls: [...studionet.rpcUrls.default.http],
-                nativeCurrency: studionet.nativeCurrency,
-                blockExplorerUrls: studionet.blockExplorers ? [studionet.blockExplorers.default.url] : [],
-              },
-            ],
+            params: [{
+              chainId: chainIdHex,
+              chainName: studionet.name,
+              rpcUrls: [...studionet.rpcUrls.default.http],
+              nativeCurrency: studionet.nativeCurrency,
+              blockExplorerUrls: studionet.blockExplorers ? [studionet.blockExplorers.default.url] : [],
+            }],
           });
         } else {
           throw switchError;
         }
       }
-      
       setAddress(accounts[0]);
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error('Wallet connection error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to connect wallet.');
+      setError(err.message || 'Failed to connect wallet.');
     } finally {
       setIsConnecting(false);
     }
@@ -65,12 +53,8 @@ export function useGenlayer() {
     setError(null);
   };
 
-  const verifyWebClaim = async (url: string, claim: string): Promise<string> => {
-    if (!address) {
-      throw new Error('Wallet not connected!');
-    }
-
-    // Create the write client with window.ethereum to trigger the MetaMask popup
+  const _handleWrite = async (functionName: string, args: any[]) => {
+    if (!address) throw new Error('Wallet not connected!');
     const writeClient = createClient({
       chain: studionet,
       account: address as `0x${string}`,
@@ -78,65 +62,74 @@ export function useGenlayer() {
     });
 
     try {
-      // This will trigger the MetaMask popup for the user to confirm the transaction and pay GEN token gas
       const transactionHash = await writeClient.writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
-        functionName: 'verify_web_claim',
-        args: [url, claim],
+        functionName,
+        args,
         value: 0n,
       });
       
       try {
-        const receipt = await writeClient.waitForTransactionReceipt({ 
-          hash: transactionHash
-        });
-        
+        const receipt = await writeClient.waitForTransactionReceipt({ hash: transactionHash });
         if (String(receipt.status) === 'reverted' || String(receipt.status) === '0') {
-          throw new Error('Transaction reverted by the network (e.g., invalid URL, timeout, or consensus failure).');
+          throw new Error('Transaction reverted by the network.');
         }
-      } catch (receiptErr: unknown) {
-        const msg = receiptErr instanceof Error ? receiptErr.message : String(receiptErr);
-        if (msg.includes('Timed out waiting for transaction') || msg.includes('timeout')) {
-          console.warn('Receipt timeout caught, falling back to manual state polling...', msg);
-          // We ignore the timeout because the transaction is still pending on the GenLayer testnet.
-          // The UI will gracefully fallback to polling get_verification_status for up to 10 minutes.
-        } else {
-          throw receiptErr;
-        }
+      } catch (receiptErr: any) {
+        if (!receiptErr.message?.includes('timeout')) throw receiptErr;
       }
-
       return transactionHash;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Transaction rejected or failed.';
-      if (msg.includes('Server busy')) {
-        throw new Error('The GenLayer Studio network is currently congested (all execution slots are occupied). Please wait a few moments and try again.');
+    } catch (err: any) {
+      if (err.message?.includes('Server busy')) {
+        throw new Error('The GenLayer Studio network is currently congested. Please wait a few moments and try again.');
       }
-      throw new Error(msg);
+      throw new Error(err.message || 'Transaction rejected or failed.');
     }
   };
 
-  const getVerificationStatus = async (url: string, claim: string): Promise<string> => {
-    // Read client doesn't strictly need the provider for signing
-    const readClient = createClient({
-      chain: studionet,
-    });
-
+  const _handleRead = async (functionName: string, args: any[] = []) => {
+    const readClient = createClient({ chain: studionet });
     try {
       const result = await readClient.readContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
-        functionName: 'get_verification_status',
-        args: [url, claim],
+        functionName,
+        args,
       });
-      return result as string;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to read from contract.';
-      if (msg.includes('Server busy')) {
-        // Just return 'NOT_YET_EVALUATED' to keep polling instead of throwing an error during polling
-        return 'NOT_YET_EVALUATED';
-      }
-      throw new Error(msg);
+      return result;
+    } catch (err: any) {
+      if (err.message?.includes('Server busy')) return null; // Keep polling
+      throw new Error(err.message || 'Failed to read from contract.');
     }
   };
+
+  const faucet = () => _handleWrite('faucet', []);
+  const createMarket = (claim: string, urls: string[]) => _handleWrite('create_market', [claim, urls]);
+  const bet = (marketId: number, isYes: boolean, amount: number) => _handleWrite('bet', [marketId, isYes, amount]);
+  const resolveMarket = (marketId: number) => _handleWrite('resolve_market', [marketId]);
+
+  const getBalance = useCallback(async (userAddress: string) => {
+    const res = await _handleRead('get_balance', [userAddress]);
+    return res ? Number(res) : 0;
+  }, []);
+
+  const getAllMarkets = useCallback(async () => {
+    const res = await _handleRead('get_all_markets');
+    if (!res) return [];
+    try {
+      return JSON.parse(res as string);
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const getMarket = useCallback(async (marketId: number) => {
+    const res = await _handleRead('get_market', [marketId]);
+    if (!res) return null;
+    try {
+      return JSON.parse(res as string);
+    } catch {
+      return null;
+    }
+  }, []);
 
   return {
     address,
@@ -145,7 +138,12 @@ export function useGenlayer() {
     setError,
     connectWallet,
     disconnectWallet,
-    verifyWebClaim,
-    getVerificationStatus
+    faucet,
+    createMarket,
+    bet,
+    resolveMarket,
+    getBalance,
+    getAllMarkets,
+    getMarket
   };
 }

@@ -1,99 +1,197 @@
-# v0.2.17
-# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-
 import json
+import re
 from genlayer import *
 
 
 class VeriTrustAI(gl.Contract):
     """
-    VeriTrust AI: A decentralized web content verification oracle
-    using strict LLM consensus blocks.
+    VeriTrust Prediction Market & Escrow Protocol
+    Users bet GEN tokens on factual claims. Validators natively fetch from multiple sources,
+    clean the HTML internally, reach consensus, and automatically slash losers / mint to winners.
     """
 
-    # Persistent storage using GenLayer's strict TreeMap structure
-    verified_claims: TreeMap[str, str]
+    balances: TreeMap[str, int]
+    markets: TreeMap[int, str]
+    next_market_id: int
 
     def __init__(self):
-        self.verified_claims = TreeMap()
+        self.balances = TreeMap()
+        self.markets = TreeMap()
+        self.next_market_id = 1
 
     @gl.public.write
-    def verify_web_claim(self, url: str, claim: str) -> str:
-        storage_key = f"{url}::{claim}"
+    def faucet(self) -> int:
+        """Mints 1000 test GEN tokens to the caller."""
+        sender = str(gl.message.sender_address)
+        current = self.balances.get(sender, 0)
+        self.balances[sender] = current + 1000
+        return self.balances[sender]
+
+    @gl.public.view
+    def get_balance(self, address: str) -> int:
+        return self.balances.get(address, 0)
+
+    @gl.public.write
+    def create_market(self, claim: str, resolution_urls: list[str]) -> int:
+        """Opens a new prediction market/escrow."""
+        if not resolution_urls or len(resolution_urls) == 0:
+            raise Exception("Must provide at least one resolution URL")
+        if len(resolution_urls) > 3:
+            raise Exception("Maximum of 3 resolution URLs allowed to avoid timeout")
+            
+        market_id = self.next_market_id
+        self.next_market_id += 1
         
-        # Define a zero-argument callable that captures our arguments from the outer scope
+        market_data = {
+            "id": market_id,
+            "creator": str(gl.message.sender_address),
+            "claim": claim,
+            "resolution_urls": resolution_urls,
+            "status": "OPEN", 
+            "verdict": None,
+            "pool_yes": 0,
+            "pool_no": 0,
+            "bets": [] 
+        }
+        
+        self.markets[market_id] = json.dumps(market_data)
+        return market_id
+
+    @gl.public.write
+    def bet(self, market_id: int, prediction_is_true: bool, amount: int) -> bool:
+        """Locks GEN tokens into the market escrow pool."""
+        if amount <= 0:
+            raise Exception("Bet amount must be greater than zero")
+            
+        sender = str(gl.message.sender_address)
+        current_balance = self.balances.get(sender, 0)
+        if current_balance < amount:
+            raise Exception("Insufficient GEN token balance")
+            
+        market_json = self.markets.get(market_id, None)
+        if not market_json:
+            raise Exception("Market not found")
+            
+        market = json.loads(market_json)
+        if market["status"] != "OPEN":
+            raise Exception("Market is already resolved")
+            
+        # Deduct balance
+        self.balances[sender] = current_balance - amount
+        
+        # Add to pool
+        if prediction_is_true:
+            market["pool_yes"] += amount
+        else:
+            market["pool_no"] += amount
+            
+        market["bets"].append({
+            "sender": sender,
+            "prediction_is_true": prediction_is_true,
+            "amount": amount
+        })
+        
+        self.markets[market_id] = json.dumps(market)
+        return True
+
+    @gl.public.write
+    def resolve_market(self, market_id: int) -> str:
+        """
+        Natively fetches multiple URLs, reaches LLM consensus on the claim,
+        and distributes escrowed funds (burns losers, mints rewards for winners).
+        """
+        market_json = self.markets.get(market_id, None)
+        if not market_json:
+            raise Exception("Market not found")
+            
+        market = json.loads(market_json)
+        if market["status"] != "OPEN":
+            raise Exception("Market already resolved")
+
+        claim = market["claim"]
+        urls = market["resolution_urls"]
+        
         def run_llm() -> str:
-            try:
-                # Fetching happens securely on the validator nodes, inside the consensus block!
-                # We route through a public markdown extractor (Jina) to strip HTML bloat,
-                # ensuring the LLM reads actual article text and not just HTML <head> metadata.
-                jina_url = "https://r.jina.ai/" + url
-                web_data = str(gl.nondet.web.get(jina_url))
-                safe_web_data = web_data[:10000] # Increase limit to 10k chars of pure markdown
-                
-                if not safe_web_data or len(safe_web_data.strip()) == 0:
-                    return "INSUFFICIENT_DATA|Failed to fetch the webpage content."
-            except Exception as e:
-                return f"INSUFFICIENT_DATA|Failed to fetch the webpage content: {str(e)}"
-                
+            combined_text = ""
+            for i, url in enumerate(urls):
+                try:
+                    # Native fetching, NO proxy!
+                    html_content = str(gl.nondet.web.get(url))
+                    
+                    # Native HTML Stripping to extract readable text
+                    clean = re.sub(r'<script.*?>.*?</script>', ' ', html_content, flags=re.DOTALL | re.IGNORECASE)
+                    clean = re.sub(r'<style.*?>.*?</style>', ' ', clean, flags=re.DOTALL | re.IGNORECASE)
+                    clean = re.sub(r'<[^>]+>', ' ', clean)
+                    clean = re.sub(r'\s+', ' ', clean).strip()
+                    
+                    # Truncate to ensure prompt fits LLM context limits safely
+                    safe_text = clean[:4000]
+                    combined_text += f"\n--- SOURCE {i+1}: {url} ---\n{safe_text}\n"
+                except Exception as e:
+                    combined_text += f"\n--- SOURCE {i+1}: {url} ---\n[Failed to fetch: {str(e)}]\n"
+
             prompt = (
-                f"Analyze this webpage data:\n\n"
-                f"--- CONTENT ---\n{safe_web_data}\n--- END ---\n\n"
-                f"Claim: '{claim}'\n\n"
-                f"Respond with EXACTLY ONE WORD. Is the claim supported? Output 'VERIFIED', 'REFUTED', or 'INSUFFICIENT_DATA'."
+                f"You are the oracle for a decentralized prediction market.\n"
+                f"Read the following native web sources:\n"
+                f"{combined_text}\n\n"
+                f"Market Claim: '{claim}'\n\n"
+                f"Based ONLY on the provided sources, is this claim TRUE or FALSE? "
+                f"If the sources do not provide enough information to definitively prove or disprove it, answer UNDETERMINED.\n"
+                f"Respond with EXACTLY ONE WORD: 'TRUE', 'FALSE', or 'UNDETERMINED'."
             )
-            # Inside eq_principle block, this non-deterministic call is ALLOWED!
+            
             llm_output = gl.nondet.exec_prompt(prompt).strip().upper()
-
-            if "VERIFIED" in llm_output:
-                return "VERIFIED|The claim is supported by the webpage content."
-            elif "REFUTED" in llm_output:
-                return "REFUTED|The claim is contradicted by the webpage content."
+            
+            if "TRUE" in llm_output:
+                return "TRUE"
+            elif "FALSE" in llm_output:
+                return "FALSE"
             else:
-                return "INSUFFICIENT_DATA|Could not conclusively verify or refute the claim."
+                return "UNDETERMINED"
 
-        # GenVM REQUIRES non-deterministic functions to be run inside an eq_principle block
+        # Force consensus across validators
         try:
             consensus_result = gl.eq_principle.prompt_comparative(
                 run_llm,
-                "The verdicts must match exactly (VERIFIED, REFUTED, or INSUFFICIENT_DATA)."
+                "The verdicts must match exactly (TRUE, FALSE, or UNDETERMINED)."
             )
         except Exception as e:
-            consensus_result = f"ERROR|Consensus Execution Exception: {str(e)}"
+            raise Exception(f"Consensus Execution Exception: {str(e)}")
             
-        # Provenance: Bind the sender address to the result
-        try:
-            sender = str(gl.message.sender_address)
-        except Exception:
-            sender = "UNKNOWN_SENDER"
-            
-        # Preserve Submission History: fetch existing records, append, and save
-        history_str = self.verified_claims.get(storage_key, "[]")
-        try:
-            history = json.loads(history_str)
-        except Exception:
-            history = []
-            
-        new_record = {
-            "verdict": consensus_result.split("|")[0] if "|" in consensus_result else consensus_result,
-            "remark": consensus_result.split("|", 1)[1] if "|" in consensus_result else "",
-            "sender": sender
-        }
+        market["status"] = "RESOLVED"
+        market["verdict"] = consensus_result
         
-        history.append(new_record)
-        final_result_json = json.dumps(history)
-        
-        self.verified_claims[storage_key] = final_result_json
-        return final_result_json
+        # Payout / Slashing Logic
+        if consensus_result == "TRUE":
+            # YES wins. NO is burned.
+            for bet in market["bets"]:
+                if bet["prediction_is_true"]:
+                    current = self.balances.get(bet["sender"], 0)
+                    self.balances[bet["sender"]] = current + (bet["amount"] * 2)
+        elif consensus_result == "FALSE":
+            # NO wins. YES is burned.
+            for bet in market["bets"]:
+                if not bet["prediction_is_true"]:
+                    current = self.balances.get(bet["sender"], 0)
+                    self.balances[bet["sender"]] = current + (bet["amount"] * 2)
+        else:
+            # Refund all bets if undetermined
+            for bet in market["bets"]:
+                current = self.balances.get(bet["sender"], 0)
+                self.balances[bet["sender"]] = current + bet["amount"]
+                
+        self.markets[market_id] = json.dumps(market)
+        return consensus_result
 
     @gl.public.view
-    def get_verification_status(self, url: str, claim: str) -> str:
-        """
-        Read-only state reader to fetch historical evaluations.
-        """
-        storage_key = f"{url}::{claim}"
-
-        if storage_key in self.verified_claims:
-            return self.verified_claims[storage_key]
-
-        return "NOT_YET_EVALUATED"
+    def get_market(self, market_id: int) -> str:
+        return self.markets.get(market_id, "{}")
+        
+    @gl.public.view
+    def get_all_markets(self) -> str:
+        all_markets = []
+        for i in range(1, self.next_market_id):
+            m_json = self.markets.get(i, None)
+            if m_json:
+                all_markets.append(json.loads(m_json))
+        return json.dumps(all_markets)
