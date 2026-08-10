@@ -53,7 +53,7 @@ export function useGenlayer() {
     setError(null);
   };
 
-  const _handleWrite = async (functionName: string, args: any[], valueInWei: bigint = 0n, retries = 2): Promise<any> => {
+  const _handleWrite = async (functionName: string, args: any[], valueInWei: bigint = 0n, retries = 10): Promise<any> => {
     if (!address) throw new Error('Wallet not connected!');
     const writeClient = createClient({
       chain: studionet,
@@ -80,17 +80,16 @@ export function useGenlayer() {
       return transactionHash;
     } catch (err: any) {
       const errMsg = err.message || String(err);
-      if ((errMsg.includes('rate limited') || errMsg.includes('Failed to fetch')) && retries > 0) {
-        console.warn('Network issue (Rate limited / Failed to fetch). Auto-retrying in 5 seconds...');
+      if ((errMsg.includes('rate limited') || errMsg.includes('Failed to fetch') || errMsg.includes('Server busy')) && retries > 0) {
+        console.warn(`Network busy. Auto-retrying... (${retries} retries left)`);
         await new Promise(r => setTimeout(r, 5000));
         return _handleWrite(functionName, args, valueInWei, retries - 1);
       }
-      if (errMsg.includes('rate limited') || errMsg.includes('Failed to fetch')) {
-        throw new Error('Transaction failed due to network RPC limits. Please wait a few seconds and try again.');
+      
+      if (errMsg.includes('rate limited') || errMsg.includes('Failed to fetch') || errMsg.includes('Server busy')) {
+        throw new Error('The GenLayer network is extremely congested right now. Please try again later.');
       }
-      if (errMsg.includes('Server busy')) {
-        throw new Error('The GenLayer Studio network is currently congested. Please wait a few moments and try again.');
-      }
+      
       throw new Error(errMsg || 'Transaction rejected or failed.');
     }
   };
