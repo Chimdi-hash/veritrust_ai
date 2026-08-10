@@ -6,8 +6,7 @@ from genlayer import *
 @gl.evm.contract_interface
 class EOA:
     class View: pass
-    class Write:
-        def transfer(self, value: u256): pass
+    class Write: pass
 
 class VeriTrustAI(gl.Contract):
     """
