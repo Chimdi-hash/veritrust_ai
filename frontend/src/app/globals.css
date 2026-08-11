@@ -258,16 +258,60 @@ input:focus, textarea:focus, select:focus {
   gap: 1rem;
 }
 
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+.tabs-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding-bottom: 1rem;
+}
+
 @media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .tabs-container {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .tabs-container button {
+    flex: 1 1 calc(50% - 1rem);
+    text-align: center;
+  }
+
+  .card {
+    padding: 1.5rem;
+  }
+
   .header {
     flex-direction: column;
     gap: 1.5rem;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
   }
+
   .header-badge-container {
     flex-direction: column;
     width: 100%;
-    align-items: stretch;
+    align-items: center;
+  }
+
+  .bet-tube-container {
+    padding: 0.25rem;
+  }
+
+  .tube-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
   }
 }
 

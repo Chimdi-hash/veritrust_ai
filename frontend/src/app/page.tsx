@@ -172,7 +172,7 @@ export default function Home() {
       </header>
 
       <main>
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '1rem' }}>
+        <div className="tabs-container">
           <button 
             className={activeTab === 'active' ? 'btn-primary' : 'btn-secondary'}
             onClick={() => setActiveTab('active')}
