@@ -208,17 +208,7 @@ export default function Home() {
             </p>
 
           <AnimatePresence>
-            {address && balance === 0 && (
-              <motion.div 
-                style={{ background: 'rgba(255, 165, 0, 0.1)', color: 'var(--warning)', border: '1px solid var(--warning)', padding: '1rem', borderRadius: '4px', display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.5rem', boxShadow: '0 0 10px rgba(255, 179, 0, 0.2)' }}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-              >
-                <AlertCircle size={20} />
-                <span><strong>Zero GEN:</strong> You have 0 GEN in your wallet. Obtain testnet GEN from the official GenLayer Discord faucet.</span>
-              </motion.div>
-            )}
+
             {error && (
               <motion.div 
                 style={{ background: 'rgba(255, 0, 60, 0.1)', color: 'var(--danger)', border: '1px solid var(--danger)', padding: '1rem', borderRadius: '4px', display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.5rem', boxShadow: '0 0 10px rgba(255, 0, 60, 0.2)' }}
