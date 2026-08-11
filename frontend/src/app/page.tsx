@@ -364,7 +364,7 @@ export default function Home() {
 
               {/* SLEEK TUBE BETTING UI */}
               <div 
-                className={`bet-tube-container ${shiningTube?.marketId === m.id ? (shiningTube.side === 'YES' ? 'glow-yes' : 'glow-no') : ''}`}
+                className={`bet-tube-container ${shiningTube?.marketId === m.id ? (shiningTube?.side === 'YES' ? 'glow-yes' : 'glow-no') : ''}`}
                 style={{ marginBottom: '1.5rem' }}
               >
                 <button 
