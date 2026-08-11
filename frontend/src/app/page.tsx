@@ -44,10 +44,11 @@ export default function Home() {
         setBalance(b);
       }
       const m = await getAllMarkets();
-      if (m) setMarkets(m.reverse());
-      setIsLoading(false);
+      if (m !== null) setMarkets(m.reverse());
     } catch (err) {
       console.warn("Background poll failed:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 

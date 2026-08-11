@@ -124,7 +124,10 @@ export function useGenlayer() {
         await new Promise(r => setTimeout(r, 2000));
         return _handleRead(functionName, args, retries - 1);
       }
-      if (errMsg.includes('Server busy') || errMsg.includes('Failed to fetch')) return null; // Keep polling without crashing
+      if (errMsg.includes('rate limited') || errMsg.includes('Failed to fetch') || errMsg.includes('Server busy')) {
+        console.warn('RPC Rate limit or network issue, skipping this poll.');
+        return null; // Return null instead of throwing to prevent UI crash
+      }
       throw new Error(errMsg || 'Failed to read from contract.');
     }
   };
@@ -156,12 +159,12 @@ export function useGenlayer() {
   }, []);
 
   const getAllMarkets = useCallback(async () => {
-    const res = await _handleRead('get_all_markets');
-    if (!res) return [];
     try {
+      const res = await _handleRead('get_all_markets');
+      if (!res) return null;
       return JSON.parse(res as string);
     } catch {
-      return [];
+      return null;
     }
   }, []);
 
