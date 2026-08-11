@@ -12,7 +12,9 @@ export default function Home() {
   const [balance, setBalance] = useState<number | null>(null);
   const [markets, setMarkets] = useState<any[]>([]);
   const [betAmounts, setBetAmounts] = useState<Record<number, number>>({});
-  const [activeTab, setActiveTab] = useState<'markets' | 'create'>('markets');
+  
+  const [activeTab, setActiveTab] = useState<'active' | 'closed' | 'create'>('active');
+  const [shiningTube, setShiningTube] = useState<{marketId: number, side: 'YES'|'NO'} | null>(null);
   
   const [claim, setClaim] = useState('');
   const [urls, setUrls] = useState(['', '', '']);
@@ -72,6 +74,7 @@ export default function Home() {
       return;
     }
     setIsProcessing(true);
+    setShiningTube({marketId, side: isYes ? 'YES' : 'NO'});
     setLoadingMsg(`Placing ${amount} GEN bet on ${isYes ? 'YES' : 'NO'}...`);
     setError(null);
     try {
@@ -81,6 +84,7 @@ export default function Home() {
       setError(err.message);
     } finally {
       setIsProcessing(false);
+      setShiningTube(null);
     }
   };
 
@@ -191,11 +195,18 @@ export default function Home() {
       <main>
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '1rem' }}>
           <button 
-            className={activeTab === 'markets' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => setActiveTab('markets')}
+            className={activeTab === 'active' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setActiveTab('active')}
             style={{ borderRadius: '20px', padding: '0.5rem 1.5rem', fontSize: '0.9rem' }}
           >
             ACTIVE MARKETS
+          </button>
+          <button 
+            className={activeTab === 'closed' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setActiveTab('closed')}
+            style={{ borderRadius: '20px', padding: '0.5rem 1.5rem', fontSize: '0.9rem' }}
+          >
+            CLOSED MARKETS
           </button>
           <button 
             className={activeTab === 'create' ? 'btn-primary' : 'btn-secondary'}
@@ -302,16 +313,16 @@ export default function Home() {
         </motion.div>
         )}
 
-        {activeTab === 'markets' && (
+        {activeTab === 'active' && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="grid">
-              {markets.length === 0 && (
-                <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', gridColumn: '1 / -1' }}>No markets found.</div>
+              {markets.filter(m => m.status === 'OPEN').length === 0 && (
+                <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', gridColumn: '1 / -1' }}>No active markets found.</div>
               )}
-              {markets.map((m) => (
+              {markets.filter(m => m.status === 'OPEN').map((m) => (
             <motion.div 
               key={m.id}
               className="card"
@@ -321,19 +332,12 @@ export default function Home() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <div className="detail-label">MARKET #{m.id}</div>
-                <div className={`badge ${getBadgeClass(m.status, m.verdict)}`}>
-                  {m.status === 'OPEN' ? 'OPEN' : m.verdict}
+                <div className="badge badge-open">
+                  OPEN
                 </div>
               </div>
               
               <h3 style={{ flexGrow: 1, marginBottom: '1.5rem', fontSize: '1.3rem' }}>{m.claim}</h3>
-              
-              {m.status === 'RESOLVED' && m.remark && (
-                <div style={{ marginBottom: '1.5rem', background: 'rgba(56, 189, 248, 0.05)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                  <div className="detail-label" style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>ORACLE REMARK</div>
-                  <div style={{ fontSize: '0.95rem', fontStyle: 'italic', color: '#e2e8f0' }}>"{m.remark}"</div>
-                </div>
-              )}
               
               <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div className="detail-label" style={{ marginBottom: '0.5rem' }}>SOURCES</div>
@@ -346,49 +350,43 @@ export default function Home() {
                 </div>
               </div>
 
-              {m.status === 'OPEN' && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label className="detail-label" style={{ display: 'block', marginBottom: '0.5rem' }}>STAKE (GEN)</label>
-                  <input 
-                    type="number" 
-                    min="1"
-                    step="0.1"
-                    value={betAmounts[m.id] || 10}
-                    onChange={(e) => setBetAmounts({...betAmounts, [m.id]: Number(e.target.value)})}
-                    style={{ marginBottom: 0, textAlign: 'center', fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)' }}
-                  />
-                </div>
-              )}
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label className="detail-label" style={{ display: 'block', marginBottom: '0.5rem' }}>STAKE (GEN)</label>
+                <input 
+                  type="number" 
+                  min="1"
+                  step="0.1"
+                  value={betAmounts[m.id] || 10}
+                  onChange={(e) => setBetAmounts({...betAmounts, [m.id]: Number(e.target.value)})}
+                  style={{ marginBottom: 0, textAlign: 'center', fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)' }}
+                />
+              </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ background: 'rgba(57, 255, 20, 0.05)', border: '1px solid rgba(57, 255, 20, 0.2)', padding: '1.5rem 1rem', borderRadius: '4px', textAlign: 'center', boxShadow: 'inset 0 0 10px rgba(57, 255, 20, 0.05)' }}>
-                  <div className="detail-label" style={{ color: 'var(--success)', marginBottom: '0.5rem' }}>YES POOL</div>
-                  <div className="text-success" style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>{formatWei(m.pool_yes)}</div>
-                  {m.status === 'OPEN' && (
-                    <button 
-                      className="btn-success"
-                      onClick={() => handleBet(m.id, true)}
-                      disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
-                      style={{ width: '100%', marginTop: '1rem', padding: '0.75rem' }}
-                    >
-                      YES
-                    </button>
-                  )}
+              {/* SLEEK TUBE BETTING UI */}
+              <div 
+                className={`bet-tube-container ${shiningTube?.marketId === m.id ? (shiningTube.side === 'YES' ? 'glow-yes' : 'glow-no') : ''}`}
+                style={{ marginBottom: '1.5rem' }}
+              >
+                <button 
+                  className="tube-btn yes"
+                  onClick={() => handleBet(m.id, true)}
+                  disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
+                >
+                  YES
+                </button>
+
+                <div className="pool-amounts">
+                  <div><span style={{color:'var(--success)'}}>{formatWei(m.pool_yes)}</span> <span style={{opacity:0.3}}>|</span> <span style={{color:'var(--danger)'}}>{formatWei(m.pool_no)}</span></div>
+                  <div style={{fontSize:'0.65rem', marginTop: '0.1rem'}}>POOLS (GEN)</div>
                 </div>
-                <div style={{ background: 'rgba(255, 0, 60, 0.05)', border: '1px solid rgba(255, 0, 60, 0.2)', padding: '1.5rem 1rem', borderRadius: '4px', textAlign: 'center', boxShadow: 'inset 0 0 10px rgba(255, 0, 60, 0.05)' }}>
-                  <div className="detail-label" style={{ color: 'var(--danger)', marginBottom: '0.5rem' }}>NO POOL</div>
-                  <div className="text-danger" style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>{formatWei(m.pool_no)}</div>
-                  {m.status === 'OPEN' && (
-                    <button 
-                      className="btn-danger"
-                      onClick={() => handleBet(m.id, false)}
-                      disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
-                      style={{ width: '100%', marginTop: '1rem', padding: '0.75rem' }}
-                    >
-                      NO
-                    </button>
-                  )}
-                </div>
+
+                <button 
+                  className="tube-btn no"
+                  onClick={() => handleBet(m.id, false)}
+                  disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
+                >
+                  NO
+                </button>
               </div>
 
               <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -416,16 +414,88 @@ export default function Home() {
                 )}
               </div>
 
-              {m.status === 'OPEN' && (
-                <button 
-                  className="btn-primary"
-                  onClick={() => handleResolve(m.id)}
-                  disabled={!address || isProcessing}
-                  style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: 'auto' }}
-                >
-                  <Play size={18} /> TRIGGER ORACLE
-                </button>
+              <button 
+                className="btn-primary"
+                onClick={() => handleResolve(m.id)}
+                disabled={!address || isProcessing}
+                style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: 'auto' }}
+              >
+                <Play size={18} /> TRIGGER EVALUATION
+              </button>
+            </motion.div>
+          ))}
+          </div>
+        </motion.div>
+        )}
+
+        {activeTab === 'closed' && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="grid">
+              {markets.filter(m => m.status === 'RESOLVED').length === 0 && (
+                <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', gridColumn: '1 / -1' }}>No closed markets found.</div>
               )}
+              {markets.filter(m => m.status === 'RESOLVED').map((m) => (
+            <motion.div 
+              key={m.id}
+              className="card"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div className="detail-label">MARKET #{m.id}</div>
+                <div className="badge badge-in-progress">
+                  CLOSED
+                </div>
+              </div>
+              
+              <h3 style={{ flexGrow: 1, marginBottom: '1.5rem', fontSize: '1.3rem' }}>{m.claim}</h3>
+              
+              {m.remark && (
+                <div style={{ marginBottom: '1.5rem', background: 'rgba(56, 189, 248, 0.05)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                  <div className="detail-label" style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>ORACLE REMARK</div>
+                  <div style={{ fontSize: '0.95rem', fontStyle: 'italic', color: '#e2e8f0' }}>"{m.remark}"</div>
+                </div>
+              )}
+              
+              <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="detail-label" style={{ marginBottom: '0.5rem' }}>SOURCES</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {m.resolution_urls.map((u: string, i: number) => (
+                    <a key={i} href={u} target="_blank" rel="noreferrer" style={{ wordBreak: 'break-all', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <LinkIcon size={14} /> {u}
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="detail-label" style={{ marginBottom: '1rem' }}>LEDGER</div>
+                {(!m.bets || m.bets.length === 0) ? (
+                  <div style={{ fontSize: '0.9rem', color: '#64748b', textAlign: 'center' }}>No transactions.</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                    {m.bets.map((b: any, idx: number) => (
+                      <div key={idx} className="detail-row" style={{ margin: 0, paddingBottom: 0, border: 'none' }}>
+                        <span style={{ fontSize: '0.9rem' }}>
+                          <span style={{ color: '#94a3b8' }}>{b.sender.substring(0, 6)}...</span>
+                          {' '}stake{' '}
+                          <span className={b.prediction_is_true ? 'text-success' : 'text-danger'} style={{ fontWeight: 'bold' }}>
+                            {b.prediction_is_true ? 'YES' : 'NO'}
+                          </span>
+                        </span>
+                        <div>
+                          <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>{formatWei(b.amount)} GEN</span>
+                          {renderBetStatus(m, b)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </motion.div>
           ))}
           </div>
