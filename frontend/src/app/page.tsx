@@ -6,19 +6,33 @@ import { Wallet, ShieldCheck, AlertCircle, Loader2, Link as LinkIcon, FileText, 
 import { useGenlayer } from '@/hooks/useGenlayer';
 import './globals.css';
 
+const formatWei = (wei: string | number) => {
+  try {
+    return Number(BigInt(wei) / 100000000000000n) / 10000;
+  } catch (e) {
+    return 0;
+  }
+};
+
+const renderBetStatus = (market: any, bet: any) => {
+  if (market.status !== 'RESOLVED') return null;
+  if (market.verdict === 'UNDETERMINED') {
+    return <span className="badge" style={{background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', border: '1px solid var(--warning)', marginLeft: '0.5rem'}}>REFUNDED</span>;
+  }
+  const isWinner = (market.verdict === 'TRUE' && bet.prediction_is_true) || (market.verdict === 'FALSE' && !bet.prediction_is_true);
+  return isWinner 
+    ? <span className="badge badge-resolved" style={{marginLeft: '0.5rem'}}>PAID OUT</span> 
+    : <span className="badge" style={{background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid var(--danger)', marginLeft: '0.5rem'}}>BURNED</span>;
+};
+
 export default function Home() {
   const { address, isConnecting, error, setError, connectWallet, disconnectWallet, getBalance, createMarket, getAllMarkets, bet, resolveMarket } = useGenlayer();
   
   const [balance, setBalance] = useState<number | null>(null);
   const [markets, setMarkets] = useState<any[]>([]);
-  const [betAmounts, setBetAmounts] = useState<Record<number, number>>({});
-  
   const [activeTab, setActiveTab] = useState<'active' | 'closed' | 'create'>('active');
-  const [shiningTube, setShiningTube] = useState<{marketId: number, side: 'YES'|'NO'} | null>(null);
-  
   const [claim, setClaim] = useState('');
   const [urls, setUrls] = useState(['', '', '']);
-  
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
 
@@ -67,14 +81,12 @@ export default function Home() {
     }
   };
 
-  const handleBet = async (marketId: number, isYes: boolean) => {
-    const amount = betAmounts[marketId] || 10;
+  const handleBet = async (marketId: number, isYes: boolean, amount: number) => {
     if (amount <= 0) {
       setError('Bet amount must be greater than 0.');
       return;
     }
     setIsProcessing(true);
-    setShiningTube({marketId, side: isYes ? 'YES' : 'NO'});
     setLoadingMsg(`Placing ${amount} GEN bet on ${isYes ? 'YES' : 'NO'}...`);
     setError(null);
     try {
@@ -84,7 +96,6 @@ export default function Home() {
       setError(err.message);
     } finally {
       setIsProcessing(false);
-      setShiningTube(null);
     }
   };
 
@@ -100,38 +111,6 @@ export default function Home() {
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const getStatusColorClass = (v: string) => {
-    if (v === 'TRUE') return 'text-success';
-    if (v === 'FALSE') return 'text-danger';
-    if (v === 'UNDETERMINED') return 'text-warning';
-    return '';
-  };
-
-  const getBadgeClass = (status: string, verdict: string) => {
-    if (status === 'OPEN') return 'badge-open';
-    if (status === 'RESOLVED') return verdict === 'TRUE' || verdict === 'FALSE' ? 'badge-resolved' : 'badge-in-progress';
-    return 'badge-in-progress';
-  };
-
-  const formatWei = (wei: string | number) => {
-    try {
-      return Number(BigInt(wei) / 100000000000000n) / 10000;
-    } catch (e) {
-      return 0;
-    }
-  };
-
-  const renderBetStatus = (market: any, bet: any) => {
-    if (market.status !== 'RESOLVED') return null;
-    if (market.verdict === 'UNDETERMINED') {
-      return <span className="badge" style={{background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', border: '1px solid var(--warning)', marginLeft: '0.5rem'}}>REFUNDED</span>;
-    }
-    const isWinner = (market.verdict === 'TRUE' && bet.prediction_is_true) || (market.verdict === 'FALSE' && !bet.prediction_is_true);
-    return isWinner 
-      ? <span className="badge badge-resolved" style={{marginLeft: '0.5rem'}}>PAID OUT</span> 
-      : <span className="badge" style={{background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid var(--danger)', marginLeft: '0.5rem'}}>BURNED</span>;
   };
 
   return (
@@ -314,194 +293,215 @@ export default function Home() {
         )}
 
         {activeTab === 'active' && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
             <div className="grid">
               {markets.filter(m => m.status === 'OPEN').length === 0 && (
                 <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', gridColumn: '1 / -1' }}>No active markets found.</div>
               )}
               {markets.filter(m => m.status === 'OPEN').map((m) => (
-            <motion.div 
-              key={m.id}
-              className="card"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <div className="detail-label">MARKET #{m.id}</div>
-                <div className="badge badge-open">
-                  OPEN
-                </div>
-              </div>
-              
-              <h3 style={{ flexGrow: 1, marginBottom: '1.5rem', fontSize: '1.3rem' }}>{m.claim}</h3>
-              
-              <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div className="detail-label" style={{ marginBottom: '0.5rem' }}>SOURCES</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {m.resolution_urls.map((u: string, i: number) => (
-                    <a key={i} href={u} target="_blank" rel="noreferrer" style={{ wordBreak: 'break-all', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <LinkIcon size={14} /> {u}
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '0.5rem' }}>
-                <label className="detail-label" style={{ display: 'block', marginBottom: '0.5rem' }}>STAKE (GEN)</label>
-                <input 
-                  type="number" 
-                  min="1"
-                  step="0.1"
-                  value={betAmounts[m.id] || 10}
-                  onChange={(e) => setBetAmounts({...betAmounts, [m.id]: Number(e.target.value)})}
-                  style={{ marginBottom: 0, textAlign: 'center', fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)' }}
+                <ActiveMarketCard 
+                  key={m.id} 
+                  m={m} 
+                  address={address} 
+                  balance={balance} 
+                  isProcessing={isProcessing} 
+                  handleBet={handleBet} 
+                  handleResolve={handleResolve} 
                 />
-              </div>
-
-              {/* SLEEK TUBE BETTING UI */}
-              <div 
-                className={`bet-tube-container ${shiningTube?.marketId === m.id ? (shiningTube?.side === 'YES' ? 'glow-yes' : 'glow-no') : ''}`}
-                style={{ marginBottom: '1.5rem' }}
-              >
-                <button 
-                  className="tube-btn yes"
-                  onClick={() => handleBet(m.id, true)}
-                  disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
-                >
-                  YES
-                </button>
-
-                <div className="pool-amounts">
-                  <div><span style={{color:'var(--success)'}}>{formatWei(m.pool_yes)}</span> <span style={{opacity:0.3}}>|</span> <span style={{color:'var(--danger)'}}>{formatWei(m.pool_no)}</span></div>
-                  <div style={{fontSize:'0.65rem', marginTop: '0.1rem'}}>POOLS (GEN)</div>
-                </div>
-
-                <button 
-                  className="tube-btn no"
-                  onClick={() => handleBet(m.id, false)}
-                  disabled={!address || isProcessing || (balance !== null && balance < (betAmounts[m.id] || 10))}
-                >
-                  NO
-                </button>
-              </div>
-
-              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div className="detail-label" style={{ marginBottom: '1rem' }}>LEDGER</div>
-                {(!m.bets || m.bets.length === 0) ? (
-                  <div style={{ fontSize: '0.9rem', color: '#64748b', textAlign: 'center' }}>No transactions.</div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                    {m.bets.map((b: any, idx: number) => (
-                      <div key={idx} className="detail-row" style={{ margin: 0, paddingBottom: 0, border: 'none' }}>
-                        <span style={{ fontSize: '0.9rem' }}>
-                          <span style={{ color: '#94a3b8' }}>{b.sender.substring(0, 6)}...</span>
-                          {' '}stake{' '}
-                          <span className={b.prediction_is_true ? 'text-success' : 'text-danger'} style={{ fontWeight: 'bold' }}>
-                            {b.prediction_is_true ? 'YES' : 'NO'}
-                          </span>
-                        </span>
-                        <div>
-                          <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>{formatWei(b.amount)} GEN</span>
-                          {renderBetStatus(m, b)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <button 
-                className="btn-primary"
-                onClick={() => handleResolve(m.id)}
-                disabled={!address || isProcessing}
-                style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: 'auto' }}
-              >
-                <Play size={18} /> TRIGGER EVALUATION
-              </button>
-            </motion.div>
-          ))}
-          </div>
-        </motion.div>
+              ))}
+            </div>
+          </motion.div>
         )}
 
         {activeTab === 'closed' && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
             <div className="grid">
               {markets.filter(m => m.status === 'RESOLVED').length === 0 && (
                 <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', gridColumn: '1 / -1' }}>No closed markets found.</div>
               )}
               {markets.filter(m => m.status === 'RESOLVED').map((m) => (
-            <motion.div 
-              key={m.id}
-              className="card"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <div className="detail-label">MARKET #{m.id}</div>
-                <div className="badge badge-in-progress">
-                  CLOSED
-                </div>
-              </div>
-              
-              <h3 style={{ flexGrow: 1, marginBottom: '1.5rem', fontSize: '1.3rem' }}>{m.claim}</h3>
-              
-              {m.remark && (
-                <div style={{ marginBottom: '1.5rem', background: 'rgba(56, 189, 248, 0.05)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                  <div className="detail-label" style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>ORACLE REMARK</div>
-                  <div style={{ fontSize: '0.95rem', fontStyle: 'italic', color: '#e2e8f0' }}>"{m.remark}"</div>
-                </div>
-              )}
-              
-              <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div className="detail-label" style={{ marginBottom: '0.5rem' }}>SOURCES</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {m.resolution_urls.map((u: string, i: number) => (
-                    <a key={i} href={u} target="_blank" rel="noreferrer" style={{ wordBreak: 'break-all', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <LinkIcon size={14} /> {u}
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div className="detail-label" style={{ marginBottom: '1rem' }}>LEDGER</div>
-                {(!m.bets || m.bets.length === 0) ? (
-                  <div style={{ fontSize: '0.9rem', color: '#64748b', textAlign: 'center' }}>No transactions.</div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                    {m.bets.map((b: any, idx: number) => (
-                      <div key={idx} className="detail-row" style={{ margin: 0, paddingBottom: 0, border: 'none' }}>
-                        <span style={{ fontSize: '0.9rem' }}>
-                          <span style={{ color: '#94a3b8' }}>{b.sender.substring(0, 6)}...</span>
-                          {' '}stake{' '}
-                          <span className={b.prediction_is_true ? 'text-success' : 'text-danger'} style={{ fontWeight: 'bold' }}>
-                            {b.prediction_is_true ? 'YES' : 'NO'}
-                          </span>
-                        </span>
-                        <div>
-                          <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>{formatWei(b.amount)} GEN</span>
-                          {renderBetStatus(m, b)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          ))}
-          </div>
-        </motion.div>
+                <ClosedMarketCard key={m.id} m={m} />
+              ))}
+            </div>
+          </motion.div>
         )}
       </main>
     </div>
+  );
+}
+
+function ActiveMarketCard({ m, address, balance, isProcessing, handleBet, handleResolve }: any) {
+  const [betAmount, setBetAmount] = useState<number>(10);
+  const [shiningTube, setShiningTube] = useState<'YES' | 'NO' | null>(null);
+
+  const onBet = async (isYes: boolean) => {
+    setShiningTube(isYes ? 'YES' : 'NO');
+    try {
+      await handleBet(m.id, isYes, betAmount);
+    } finally {
+      setShiningTube(null);
+    }
+  };
+
+  const hasStakes = m.bets && m.bets.length > 0;
+
+  return (
+    <motion.div 
+      className="card"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div className="detail-label">MARKET #{m.id}</div>
+        <div className="badge badge-open">OPEN</div>
+      </div>
+      
+      <h3 style={{ flexGrow: 1, marginBottom: '1.5rem', fontSize: '1.3rem' }}>{m.claim}</h3>
+      
+      <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="detail-label" style={{ marginBottom: '0.5rem' }}>SOURCES</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {m.resolution_urls.map((u: string, i: number) => (
+            <a key={i} href={u} target="_blank" rel="noreferrer" style={{ wordBreak: 'break-all', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <LinkIcon size={14} /> {u}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '0.5rem' }}>
+        <label className="detail-label" style={{ display: 'block', marginBottom: '0.5rem' }}>STAKE (GEN)</label>
+        <input 
+          type="number" 
+          min="1"
+          step="0.1"
+          value={betAmount}
+          onChange={(e) => setBetAmount(Number(e.target.value))}
+          style={{ marginBottom: 0, textAlign: 'center', fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)' }}
+        />
+      </div>
+
+      {/* SLEEK TUBE BETTING UI */}
+      <div 
+        className={`bet-tube-container ${shiningTube === 'YES' ? 'glow-yes' : (shiningTube === 'NO' ? 'glow-no' : '')}`}
+        style={{ marginBottom: '1.5rem' }}
+      >
+        <button 
+          className="tube-btn yes"
+          onClick={() => onBet(true)}
+          disabled={!address || isProcessing || (balance !== null && balance < betAmount)}
+        >
+          YES
+        </button>
+
+        <div className="pool-amounts">
+          <div><span style={{color:'var(--success)'}}>{formatWei(m.pool_yes)}</span> <span style={{opacity:0.3}}>|</span> <span style={{color:'var(--danger)'}}>{formatWei(m.pool_no)}</span></div>
+          <div style={{fontSize:'0.65rem', marginTop: '0.1rem'}}>POOLS (GEN)</div>
+        </div>
+
+        <button 
+          className="tube-btn no"
+          onClick={() => onBet(false)}
+          disabled={!address || isProcessing || (balance !== null && balance < betAmount)}
+        >
+          NO
+        </button>
+      </div>
+
+      <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="detail-label" style={{ marginBottom: '1rem' }}>LEDGER</div>
+        {(!m.bets || m.bets.length === 0) ? (
+          <div style={{ fontSize: '0.9rem', color: '#64748b', textAlign: 'center' }}>No transactions.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+            {m.bets.map((b: any, idx: number) => (
+              <div key={idx} className="detail-row" style={{ margin: 0, paddingBottom: 0, border: 'none' }}>
+                <span style={{ fontSize: '0.9rem' }}>
+                  <span style={{ color: '#94a3b8' }}>{b.sender.substring(0, 6)}...</span>
+                  {' '}stake{' '}
+                  <span className={b.prediction_is_true ? 'text-success' : 'text-danger'} style={{ fontWeight: 'bold' }}>
+                    {b.prediction_is_true ? 'YES' : 'NO'}
+                  </span>
+                </span>
+                <div>
+                  <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>{formatWei(b.amount)} GEN</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button 
+        className="btn-primary"
+        onClick={() => handleResolve(m.id)}
+        disabled={!address || isProcessing || !hasStakes}
+        style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: 'auto' }}
+      >
+        <Play size={18} /> {hasStakes ? 'TRIGGER EVALUATION' : 'WAITING FOR STAKES'}
+      </button>
+    </motion.div>
+  );
+}
+
+function ClosedMarketCard({ m }: any) {
+  return (
+    <motion.div 
+      className="card"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div className="detail-label">MARKET #{m.id}</div>
+        <div className="badge badge-in-progress">CLOSED</div>
+      </div>
+      
+      <h3 style={{ flexGrow: 1, marginBottom: '1.5rem', fontSize: '1.3rem' }}>{m.claim}</h3>
+      
+      {m.remark && (
+        <div style={{ marginBottom: '1.5rem', background: 'rgba(56, 189, 248, 0.05)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+          <div className="detail-label" style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>ORACLE REMARK</div>
+          <div style={{ fontSize: '0.95rem', fontStyle: 'italic', color: '#e2e8f0' }}>"{m.remark}"</div>
+        </div>
+      )}
+      
+      <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="detail-label" style={{ marginBottom: '0.5rem' }}>SOURCES</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {m.resolution_urls.map((u: string, i: number) => (
+            <a key={i} href={u} target="_blank" rel="noreferrer" style={{ wordBreak: 'break-all', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <LinkIcon size={14} /> {u}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '4px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="detail-label" style={{ marginBottom: '1rem' }}>LEDGER</div>
+        {(!m.bets || m.bets.length === 0) ? (
+          <div style={{ fontSize: '0.9rem', color: '#64748b', textAlign: 'center' }}>No transactions.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+            {m.bets.map((b: any, idx: number) => (
+              <div key={idx} className="detail-row" style={{ margin: 0, paddingBottom: 0, border: 'none' }}>
+                <span style={{ fontSize: '0.9rem' }}>
+                  <span style={{ color: '#94a3b8' }}>{b.sender.substring(0, 6)}...</span>
+                  {' '}stake{' '}
+                  <span className={b.prediction_is_true ? 'text-success' : 'text-danger'} style={{ fontWeight: 'bold' }}>
+                    {b.prediction_is_true ? 'YES' : 'NO'}
+                  </span>
+                </span>
+                <div>
+                  <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>{formatWei(b.amount)} GEN</span>
+                  {renderBetStatus(m, b)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </motion.div>
   );
 }
