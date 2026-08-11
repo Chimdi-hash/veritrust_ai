@@ -61,37 +61,52 @@ export function useGenlayer() {
       provider: window.ethereum,
     });
 
+    let transactionHash;
     try {
-      const transactionHash = await writeClient.writeContract({
+      transactionHash = await writeClient.writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
         functionName,
         args,
         value: valueInWei,
       });
-      
+    } catch (err: any) {
+      const errMsg = err.message || String(err);
+      if ((errMsg.includes('rate limited') || errMsg.includes('Failed to fetch') || errMsg.includes('Server busy')) && retries > 0) {
+        console.warn(`Network busy during submission. Auto-retrying... (${retries} retries left)`);
+        await new Promise(r => setTimeout(r, 5000));
+        return _handleWrite(functionName, args, valueInWei, retries - 1);
+      }
+      if (errMsg.includes('rate limited') || errMsg.includes('Failed to fetch') || errMsg.includes('Server busy')) {
+        throw new Error('The GenLayer network is extremely congested right now. Please try again later.');
+      }
+      throw new Error(errMsg || 'Transaction rejected or failed.');
+    }
+    
+    // Once submitted, wait for receipt. If fetching receipt fails, retry fetching the receipt ONLY (no new metamask popups)
+    let receiptRetries = 10;
+    while(receiptRetries > 0) {
       try {
         const receipt = await writeClient.waitForTransactionReceipt({ hash: transactionHash });
         if (String(receipt.status) === 'reverted' || String(receipt.status) === '0') {
           throw new Error('Transaction reverted by the network.');
         }
+        break; // Receipt fetched successfully
       } catch (receiptErr: any) {
-        if (!receiptErr.message?.includes('timeout')) throw receiptErr;
+        const errMsg = receiptErr.message || String(receiptErr);
+        if (errMsg.includes('rate limited') || errMsg.includes('Failed to fetch') || errMsg.includes('Server busy') || errMsg.includes('timeout')) {
+          receiptRetries--;
+          if (receiptRetries > 0) {
+            await new Promise(r => setTimeout(r, 5000));
+            continue;
+          }
+        }
+        // If it's a revert or we ran out of retries, we just log and return the hash. The tx might still be fine.
+        console.warn('Could not confirm receipt, but transaction was submitted:', errMsg);
+        break;
       }
-      return transactionHash;
-    } catch (err: any) {
-      const errMsg = err.message || String(err);
-      if ((errMsg.includes('rate limited') || errMsg.includes('Failed to fetch') || errMsg.includes('Server busy')) && retries > 0) {
-        console.warn(`Network busy. Auto-retrying... (${retries} retries left)`);
-        await new Promise(r => setTimeout(r, 5000));
-        return _handleWrite(functionName, args, valueInWei, retries - 1);
-      }
-      
-      if (errMsg.includes('rate limited') || errMsg.includes('Failed to fetch') || errMsg.includes('Server busy')) {
-        throw new Error('The GenLayer network is extremely congested right now. Please try again later.');
-      }
-      
-      throw new Error(errMsg || 'Transaction rejected or failed.');
     }
+    
+    return transactionHash;
   };
 
   const _handleRead = async (functionName: string, args: any[] = [], retries = 2): Promise<any> => {
