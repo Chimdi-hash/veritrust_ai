@@ -30,6 +30,7 @@ export default function Home() {
   
   const [balance, setBalance] = useState<number | null>(null);
   const [markets, setMarkets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'active' | 'closed' | 'create'>('active');
   const [claim, setClaim] = useState('');
   const [urls, setUrls] = useState(['', '', '']);
@@ -44,6 +45,7 @@ export default function Home() {
       }
       const m = await getAllMarkets();
       if (m) setMarkets(m.reverse());
+      setIsLoading(false);
     } catch (err) {
       console.warn("Background poll failed:", err);
     }
@@ -285,20 +287,25 @@ export default function Home() {
         {activeTab === 'active' && (
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
             <div className="grid">
-              {markets.filter(m => m.status === 'OPEN').length === 0 && (
-                <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', gridColumn: '1 / -1' }}>No active markets found.</div>
+              {isLoading ? (
+                <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                  <Loader2 size={18} className="animate-spin" /> Fetching markets from GenLayer...
+                </div>
+              ) : markets.filter(m => m.status === 'OPEN').length === 0 ? (
+                <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem' }}>No active markets found.</div>
+              ) : (
+                markets.filter(m => m.status === 'OPEN').map((m) => (
+                  <ActiveMarketCard 
+                    key={m.id} 
+                    m={m} 
+                    address={address} 
+                    balance={balance} 
+                    isProcessing={isProcessing} 
+                    handleBet={handleBet} 
+                    handleResolve={handleResolve} 
+                  />
+                ))
               )}
-              {markets.filter(m => m.status === 'OPEN').map((m) => (
-                <ActiveMarketCard 
-                  key={m.id} 
-                  m={m} 
-                  address={address} 
-                  balance={balance} 
-                  isProcessing={isProcessing} 
-                  handleBet={handleBet} 
-                  handleResolve={handleResolve} 
-                />
-              ))}
             </div>
           </motion.div>
         )}
@@ -306,12 +313,17 @@ export default function Home() {
         {activeTab === 'closed' && (
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
             <div className="grid">
-              {markets.filter(m => m.status === 'RESOLVED').length === 0 && (
-                <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', gridColumn: '1 / -1' }}>No closed markets found.</div>
+              {isLoading ? (
+                <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                  <Loader2 size={18} className="animate-spin" /> Fetching markets from GenLayer...
+                </div>
+              ) : markets.filter(m => m.status === 'RESOLVED').length === 0 ? (
+                <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem' }}>No closed markets found.</div>
+              ) : (
+                markets.filter(m => m.status === 'RESOLVED').map((m) => (
+                  <ClosedMarketCard key={m.id} m={m} />
+                ))
               )}
-              {markets.filter(m => m.status === 'RESOLVED').map((m) => (
-                <ClosedMarketCard key={m.id} m={m} />
-              ))}
             </div>
           </motion.div>
         )}
