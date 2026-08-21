@@ -34,6 +34,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'active' | 'closed' | 'create'>('active');
   const [claim, setClaim] = useState('');
   const [urls, setUrls] = useState(['', '', '']);
+  const [delaySeconds, setDelaySeconds] = useState(300); // Default to 5 minutes
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
 
@@ -73,9 +74,10 @@ export default function Home() {
     setLoadingMsg('Creating new prediction market...');
     setError(null);
     try {
-      await createMarket(claim.trim(), validUrls);
+      await createMarket(claim.trim(), validUrls, delaySeconds);
       setClaim('');
       setUrls(['', '', '']);
+      setDelaySeconds(300); // Reset to default
       await loadData();
     } catch (err: any) {
       setError(err.message);
@@ -273,6 +275,32 @@ export default function Home() {
               ))}
             </div>
 
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label className="detail-label" style={{ display: 'block', marginBottom: '0.5rem' }}>RESOLUTION TIME-LOCK</label>
+              <select
+                value={delaySeconds}
+                onChange={(e) => setDelaySeconds(Number(e.target.value))}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  background: 'rgba(0, 0, 0, 0.4)',
+                  border: '1px solid rgba(0, 243, 255, 0.2)',
+                  borderRadius: '4px',
+                  color: '#e2e8f0',
+                  fontSize: '1rem',
+                  fontFamily: 'var(--font-display)',
+                  outline: 'none',
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value={300} style={{ background: '#0a0b0d' }}>5 Minutes (Testing)</option>
+                <option value={3600} style={{ background: '#0a0b0d' }}>1 Hour</option>
+                <option value={86400} style={{ background: '#0a0b0d' }}>24 Hours</option>
+                <option value={604800} style={{ background: '#0a0b0d' }}>7 Days</option>
+              </select>
+            </div>
+
             <button 
               type="submit" 
               className="btn-primary"
@@ -336,6 +364,30 @@ export default function Home() {
 function ActiveMarketCard({ m, address, balance, isProcessing, handleBet, handleResolve }: any) {
   const [betAmount, setBetAmount] = useState<number>(10);
   const [shiningTube, setShiningTube] = useState<'YES' | 'NO' | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+
+  useEffect(() => {
+    const calcTimeLeft = () => {
+      const now = Math.floor(Date.now() / 1000);
+      const diff = (m.resolution_deadline || 0) - now;
+      setTimeLeft(diff > 0 ? diff : 0);
+    };
+    calcTimeLeft();
+    const interval = setInterval(calcTimeLeft, 1000);
+    return () => clearInterval(interval);
+  }, [m.resolution_deadline]);
+
+  const formatTimeLeft = (sec: number) => {
+    if (sec <= 0) return '';
+    const d = Math.floor(sec / 86400);
+    const h = Math.floor((sec % 86400) / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    
+    if (d > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    return `${m}m ${s}s`;
+  };
 
   const onBet = async (isYes: boolean) => {
     setShiningTube(isYes ? 'YES' : 'NO');
@@ -357,7 +409,10 @@ function ActiveMarketCard({ m, address, balance, isProcessing, handleBet, handle
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div className="detail-label">MARKET #{m.id}</div>
-        <div className="badge badge-open">OPEN</div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {timeLeft > 0 && <span style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '0.05em', color: '#ef4444', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>LOCKED</span>}
+          <div className="badge badge-open">OPEN</div>
+        </div>
       </div>
       
       <h3 style={{ flexGrow: 1, marginBottom: '1.5rem', fontSize: '1.3rem' }}>{m.claim}</h3>
@@ -437,12 +492,31 @@ function ActiveMarketCard({ m, address, balance, isProcessing, handleBet, handle
       </div>
 
       <button 
-        className="btn-primary"
+        className={timeLeft > 0 ? "btn-secondary" : "btn-primary"}
         onClick={() => handleResolve(m.id)}
-        disabled={!address || isProcessing || !hasStakes}
-        style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: 'auto' }}
+        disabled={!address || isProcessing || !hasStakes || timeLeft > 0}
+        style={{ 
+          width: '100%', 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          gap: '0.5rem', 
+          marginTop: 'auto',
+          background: timeLeft > 0 ? 'rgba(239, 68, 68, 0.1)' : undefined, 
+          color: timeLeft > 0 ? '#ef4444' : undefined, 
+          border: timeLeft > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : undefined,
+          cursor: timeLeft > 0 ? 'not-allowed' : 'pointer'
+        }}
       >
-        <Play size={18} /> {hasStakes ? 'TRIGGER EVALUATION' : 'WAITING FOR STAKES'}
+        {timeLeft > 0 ? (
+          <>
+            <Loader2 size={18} className="animate-spin" /> LOCKED ({formatTimeLeft(timeLeft)})
+          </>
+        ) : (
+          <>
+            <Play size={18} /> {hasStakes ? 'TRIGGER EVALUATION' : 'WAITING FOR STAKES'}
+          </>
+        )}
       </button>
     </motion.div>
   );

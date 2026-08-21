@@ -132,7 +132,7 @@ export function useGenlayer() {
     }
   };
 
-  const createMarket = (claim: string, urls: string[]) => _handleWrite('create_market', [claim, urls]);
+  const createMarket = (claim: string, urls: string[], delaySeconds: number) => _handleWrite('create_market', [claim, urls, delaySeconds]);
   
   const bet = (marketId: number, isYes: boolean, amountGen: number) => {
     const valueInWei = BigInt(amountGen) * 1000000000000000000n; // Convert GEN to wei

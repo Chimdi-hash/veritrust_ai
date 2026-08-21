@@ -1,6 +1,7 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 import json
 import re
+from datetime import datetime
 from genlayer import *
 
 @gl.evm.contract_interface
@@ -16,20 +17,41 @@ class VeriTrustAI(gl.Contract):
     Losers' stakes are locked/burned in the contract natively.
     """
 
-    markets: TreeMap[bigint, str]
+    markets: TreeMap[str, str]
     next_market_id: bigint
 
     def __init__(self):
         self.next_market_id = 1
 
     @gl.public.write
-    def create_market(self, claim: str, resolution_urls: list[str]) -> int:
+    def create_market(self, claim: str, resolution_urls: list[str], resolution_delay_seconds: int) -> int:
         """Opens a new prediction market/escrow."""
         if not resolution_urls or len(resolution_urls) == 0:
-            raise Exception("Must provide at least one resolution URL")
+            raise gl.vm.UserError("Must provide at least one resolution URL")
         if len(resolution_urls) > 3:
-            raise Exception("Maximum of 3 resolution URLs allowed to avoid timeout")
+            raise gl.vm.UserError("Maximum of 3 resolution URLs allowed to avoid timeout")
+        if resolution_delay_seconds <= 0:
+            raise gl.vm.UserError("Resolution delay must be greater than zero")
             
+        # Enforce minimum independent source requirements (at least 2 unique domains)
+        def get_domain(url: str) -> str:
+            match = re.search(r'https?://(?:www\.)?([^/]+)', url)
+            if match:
+                return match.group(1).lower()
+            return url.lower()
+            
+        unique_domains = []
+        for url in resolution_urls:
+            dom = get_domain(url)
+            if dom not in unique_domains:
+                unique_domains.append(dom)
+                
+        if len(unique_domains) < 2:
+            raise gl.vm.UserError("Must provide at least 2 independent source domains")
+            
+        current_time = int(datetime.now().timestamp())
+        resolution_deadline = current_time + resolution_delay_seconds
+        
         market_id = self.next_market_id
         self.next_market_id += 1
         
@@ -42,10 +64,11 @@ class VeriTrustAI(gl.Contract):
             "verdict": None,
             "pool_yes": 0,
             "pool_no": 0,
-            "bets": [] 
+            "bets": [],
+            "resolution_deadline": resolution_deadline
         }
         
-        self.markets[market_id] = json.dumps(market_data)
+        self.markets[str(market_id)] = json.dumps(market_data)
         return market_id
 
     @gl.public.write.payable
@@ -53,20 +76,19 @@ class VeriTrustAI(gl.Contract):
         """Locks native GEN tokens into the market escrow pool."""
         val = gl.message.value
         if val <= u256(0):
-            raise Exception("Bet amount must be greater than zero")
+            raise gl.vm.UserError("Bet amount must be greater than zero")
             
         # Convert u256 to standard int for JSON serialization
         amount = int(val)
-            
         sender = str(gl.message.sender_address)
             
-        market_json = self.markets.get(market_id, None)
+        market_json = self.markets.get(str(market_id), None)
         if not market_json:
-            raise Exception("Market not found")
+            raise gl.vm.UserError("Market not found")
             
         market = json.loads(market_json)
         if market["status"] != "OPEN":
-            raise Exception("Market is already resolved")
+            raise gl.vm.UserError("Market is already resolved")
         
         # Add to pool (tracking total wei)
         if prediction_is_true:
@@ -80,7 +102,7 @@ class VeriTrustAI(gl.Contract):
             "amount": amount
         })
         
-        self.markets[market_id] = json.dumps(market)
+        self.markets[str(market_id)] = json.dumps(market)
         return True
 
     @gl.public.write
@@ -89,13 +111,18 @@ class VeriTrustAI(gl.Contract):
         Natively fetches multiple URLs, reaches LLM consensus on the claim,
         and distributes native escrowed GEN tokens directly to winners' wallets.
         """
-        market_json = self.markets.get(market_id, None)
+        market_json = self.markets.get(str(market_id), None)
         if not market_json:
-            raise Exception("Market not found")
+            raise gl.vm.UserError("Market not found")
             
         market = json.loads(market_json)
         if market["status"] != "OPEN":
-            raise Exception("Market already resolved")
+            raise gl.vm.UserError("Market already resolved")
+            
+        # Enforce resolution deadline check
+        current_time = int(datetime.now().timestamp())
+        if current_time < market["resolution_deadline"]:
+            raise gl.vm.UserError("Cannot resolve market before the resolution deadline")
 
         claim = market["claim"]
         urls = market["resolution_urls"]
@@ -139,7 +166,7 @@ class VeriTrustAI(gl.Contract):
                 "The VERDICT part before the '|' character must match exactly (TRUE, FALSE, or UNDETERMINED). Ignore differences in the REMARK part."
             )
         except Exception as e:
-            raise Exception(f"Consensus Execution Exception: {str(e)}")
+            raise gl.vm.UserError(f"Consensus Execution Exception: {str(e)}")
             
         parts = consensus_output.split('|', 1)
         consensus_result = parts[0].strip().upper()
@@ -181,18 +208,18 @@ class VeriTrustAI(gl.Contract):
                 refund = bet["amount"]
                 EOA(Address(bet["sender"])).emit_transfer(value=u256(refund), on='finalized')
                 
-        self.markets[market_id] = json.dumps(market)
+        self.markets[str(market_id)] = json.dumps(market)
         return consensus_result
 
     @gl.public.view
     def get_market(self, market_id: int) -> str:
-        return self.markets.get(market_id, "{}")
+        return self.markets.get(str(market_id), "{}")
         
     @gl.public.view
     def get_all_markets(self) -> str:
         all_markets = []
-        for i in range(1, self.next_market_id):
-            m_json = self.markets.get(i, None)
+        for i in range(1, int(self.next_market_id)):
+            m_json = self.markets.get(str(i), None)
             if m_json:
                 all_markets.append(json.loads(m_json))
         return json.dumps(all_markets)
